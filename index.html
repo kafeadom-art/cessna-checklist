@@ -2224,6 +2224,17 @@
         var smoothedSin = null;
         var smoothedCos = null;
         var geoWatchId = null;
+        // Capacitor's watchPosition() returns the watch id asynchronously (a Promise),
+        // unlike the plain-browser API which returns it immediately. If the pilot taps
+        // GPS off again before that promise resolves, geoWatchId is still null at that
+        // moment — clearWatch() never gets called, and the id needed to ever stop it is
+        // lost, so the native GPS watch keeps running silently for the rest of the app
+        // session (this is exactly what browser preview testing can't catch, since the
+        // preview always uses the synchronous plain-browser fallback path instead).
+        // These two flags close that gap: a stop requested while the id is still
+        // pending is deferred and applied the moment the id actually arrives.
+        var watchStartInFlight = false;
+        var stopRequestedWhilePending = false;
         var MIN_SPEED_MS = 1.0; // below ~2 knots ground speed, GPS heading is unreliable — don't trust it
         var SMOOTHING_ALPHA = 0.25; // lower = smoother/slower to react, higher = snappier/noisier
         function resetHeadingSmoothing() {
@@ -2261,14 +2272,18 @@
             // by the toggle button itself and by runSub() below, so the watch (and
             // whatever battery draw it causes) never keeps running silently after
             // the pilot navigates away from this screen without pressing "כבה" first
-            if (!liveHeadingMode && geoWatchId === null) return;
+            if (!liveHeadingMode && geoWatchId === null && !watchStartInFlight) return;
             const capGeo = getCapacitorGeo();
+            liveHeadingMode = false; // set false first so any in-flight onPos/onErr callback becomes a no-op
             if (geoWatchId !== null) {
                 if (capGeo) { capGeo.clearWatch({ id: geoWatchId }); }
                 else { navigator.geolocation.clearWatch(geoWatchId); }
+                geoWatchId = null;
+            } else if (watchStartInFlight) {
+                // the native watch is still being registered — its id hasn't come
+                // back yet, so clear it the instant it does instead of losing it
+                stopRequestedWhilePending = true;
             }
-            geoWatchId = null;
-            liveHeadingMode = false;
             liveHeading = null;
             resetHeadingSmoothing();
             const btn = document.getElementById('liveHeadingToggle');
@@ -2296,6 +2311,7 @@
             const capGeo = getCapacitorGeo();
 
             function onPos(pos) {
+                if (!liveHeadingMode) return; // stopped already — ignore a stray callback that arrives after
                 const h = pos.coords.heading;
                 const spd = pos.coords.speed;
                 const tooSlow = (spd !== null && spd !== undefined && !isNaN(spd) && spd < MIN_SPEED_MS);
@@ -2313,6 +2329,7 @@
                 calcWind();
             }
             function onErr(err) {
+                if (!liveHeadingMode) return; // stopped already — ignore a stray callback that arrives after
                 liveHeadingMode = false;
                 liveHeading = null;
                 resetHeadingSmoothing();
@@ -2340,10 +2357,23 @@
                 btn.classList.add('gps-live-active');
                 setNeedleColor(true);
                 if (capGeo) {
+                    watchStartInFlight = true;
                     capGeo.watchPosition({ enableHighAccuracy: true }, function(pos, err) {
                         if (err) { onErr(err); return; }
                         if (pos) onPos(pos);
-                    }).then(function(id) { geoWatchId = id; }).catch(onErr);
+                    }).then(function(id) {
+                        watchStartInFlight = false;
+                        if (stopRequestedWhilePending) {
+                            stopRequestedWhilePending = false;
+                            capGeo.clearWatch({ id: id });
+                            return;
+                        }
+                        geoWatchId = id;
+                    }).catch(function(err) {
+                        watchStartInFlight = false;
+                        stopRequestedWhilePending = false; // nothing to defer-cancel — the watch never actually started
+                        onErr(err);
+                    });
                 } else {
                     geoWatchId = navigator.geolocation.watchPosition(
                         onPos, onErr,
