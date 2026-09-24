@@ -28,6 +28,9 @@ jobs:
 
       - name: Add the Android platform (scaffolds the android/ project fresh)
         run: npx cap add android
+        
+      - name: Remove adaptive icon override (forces use of our flat PNG icons instead) 
+        run: rm -rf android/app/src/main/res/mipmap-anydpi-v26
 
       - name: Add required location permissions to the manifest
         run: |
