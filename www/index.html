@@ -157,6 +157,8 @@
         .accordion-body { display: none; padding-bottom: 6px; }
         .accordion-body.open { display: block; }
         .reset-btn { background: #95a5a6; color: white; border: none; padding: 5px 30px; border-radius: 5px; font-weight: bold; font-size: 0.85rem; }
+        @keyframes gpsLiveBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+        #liveHeadingToggle.gps-live-active { animation: gpsLiveBlink 1.4s infinite; background: #c0392b; color: white; border-color: #c0392b; }
     </style>
 </head>
 <body>
@@ -181,7 +183,7 @@
 <div id="app" style="display:none;">
 <div id="tailHeader" style="background:#1a1a2e; color:#f1c40f; font-weight:bold; font-size:1.15rem; text-align:center; padding:0 10px; letter-spacing:1px; position:sticky; top:0; z-index:1001; height:36px; box-sizing:border-box; display:flex; align-items:center; justify-content:center;"></div>
 <div class="main-tabs">
-    <button onclick="document.getElementById('app').style.display='none'; document.getElementById('aircraft-select').style.display='flex'; document.querySelector('.reset-bar').style.display='none';" style="background:white; color:black; border:none; padding:0 10px; font-size:1.2rem; cursor:pointer; flex-shrink:0;">✈</button>
+    <button onclick="if (typeof liveHeadingMode !== 'undefined' && liveHeadingMode) stopLiveHeading(); document.getElementById('app').style.display='none'; document.getElementById('aircraft-select').style.display='flex'; document.querySelector('.reset-bar').style.display='none';" style="background:white; color:black; border:none; padding:0 10px; font-size:1.2rem; cursor:pointer; flex-shrink:0;">✈</button>
     <button id="m1" class="tab tab-general" onclick="runMain('general', this)" style="flex:0.7;">כללי</button>
     <button id="m2" class="tab tab-checks" onclick="runMain('checks', this)">בדיקות לפני טיסה</button>
     <button id="m3" class="tab tab-normal" onclick="runMain('normal', this)" style="flex:1.2;">מצבי טיסה רגילים</button>
@@ -431,7 +433,7 @@
 <div class="item"><input type="checkbox" id="gps18"><label for="gps18">ברז דלק – פתוח</label></div>
 <div class="item"><input type="checkbox" id="gps19"><label for="gps19">הגאים – וודא חופשיות תנועה וכיוון נכון</label></div>
 <div class="item"><input type="checkbox" id="gps20"><label for="gps20">מפסק ראשי – ON</label></div>
-<div class="item"><input type="checkbox" id="gps21"><label for="gps21">רדיו ל-ON, <span style="font-weight:bold;color:#FF0000">בקש רשות התנעה</span> (קלירנס)</label></div>
+<div class="item"><input type="checkbox" id="gps21"><label for="gps21">רדיו ל-ON, <span style="font-weight:bold;color:#FF0000">בקש רשות התנעה</span> <span style="font-weight:bold">(קלירנס)</span></label></div>
 <div class="item"><input type="checkbox" id="gps22"><label for="gps22">רדיו ל-OFF</label></div>
 <div class="item"><input type="checkbox" id="gps23"><label for="gps23">מפסק ראשי – OFF</label></div>`,
             engine: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">התנעה</p>
@@ -479,18 +481,18 @@
 <div class="item"><input type="checkbox" id="gpt22"><label for="gpt22">דלתות – סגורות ונעולות</label></div>
 <div class="item"><input type="checkbox" id="gpt23"><label for="gpt23">הגאים חופשיים</label></div>
 <div class="item"><input type="checkbox" id="gpt24"><label for="gpt24"><span style="font-weight:bold;color:#FF0000">תדרי רדיו וניווט מכוילים</span></label></div>
-<div class="item"><input type="checkbox" id="gpt25"><label for="gpt25" style="cursor:pointer;" onclick="const briefingSubTab = document.querySelector('#sub-checks .sub-tab:nth-child(7)'); briefingSubTab.closest('.sub-tabs-container').style.display = 'flex'; runSub('briefing', briefingSubTab);">לחץ כאן לתדריך לפני המראה</label></div>
+<div class="item"><input type="checkbox" id="gpt25"><label for="gpt25" style="cursor:pointer;" onclick="const briefingSubTab = document.querySelector('#sub-checks .sub-tab:nth-child(7)'); briefingSubTab.closest('.sub-tabs-container').style.display = 'flex'; runSub('briefing', briefingSubTab);"><span style="font-weight:bold;color:#FF4000">לחץ כאן לתדריך לפני המראה</span></label></div>
 <div class="item"><input type="checkbox" id="gpt26"><label for="gpt26">צלע סופית נקייה</label></div>
 <div class="item"><input type="checkbox" id="gpt27"><label for="gpt27"><span style="font-weight:bold;color:#FF0000">בקש רשות להתיישר – מוכן לעזיבה</span></label></div>`,
             briefing: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">תדריך לפני המראה</p>
-<div class="item"><input type="checkbox" id="gbr1"><label for="gbr1">• מאיפה באה הרוח</label></div>
-<div class="item"><input type="checkbox" id="gbr2"><label for="gbr2">• כיוון המראה (מסלול 28/10)</label></div>
-<div class="item"><input type="checkbox" id="gbr3"><label for="gbr3">• לאיפה יוצאים</label></div>
-<div class="item"><input type="checkbox" id="gbr4"><label for="gbr4">• ניתוק במהירות 55 קשר</label></div>
+<div class="item"><input type="checkbox" id="gbr1"><label for="gbr1">מאיפה באה הרוח</label></div>
+<div class="item"><input type="checkbox" id="gbr2"><label for="gbr2">כיוון המראה (מסלול 28/10)</label></div>
+<div class="item"><input type="checkbox" id="gbr3"><label for="gbr3">לאיפה יוצאים</label></div>
+<div class="item"><input type="checkbox" id="gbr4"><label for="gbr4">ניתוק במהירות 55 קשר</label></div>
 <p style="font-size:0.9rem; font-weight:bold; margin: 16px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">חירומים</p>
-<div class="item"><input type="checkbox" id="gbr5"><label for="gbr5"><span style="color:#FF0000">• תקלה על המסלול (עשן, אש, אובדן שליטה כיווני, מד מהירות לא מגיב, פנצ'ר, הגאים) – ביטול המראה. כל תקלה עד הניתוק – עוצר את המטוס, מצערת לסרק, בלימה ופינוי המסלול</span></label></div>
-<div class="item"><input type="checkbox" id="gbr6"><label for="gbr6"><span style="color:#FF0000">• תקלה במהלך הניתוק – שיקול דעת (ביטול או שדה לנ"א). אם הלך מנוע לאחר המראה, לשמור מהירות 65 ופניייה ימינה לכיוון השדות (ב-10 השדה ישר ולפנים)</span></label></div>
-<div class="item"><input type="checkbox" id="gbr7"><label for="gbr7"><span style="color:#FF0000">• תקלה אחרי ניתוק – שדה לנ"א. כל תקלה אחרת כולל אש, טיפוס לגובה בטוח וחזרה לנחיתה</span></label></div>
+<div class="item"><input type="checkbox" id="gbr5"><label for="gbr5"><span style="font-weight:bold">• תקלה על המסלול (עשן, אש, אובדן שליטה כיווני, מד מהירות לא מגיב, פנצ'ר, הגאים) – ביטול המראה. כל תקלה עד הניתוק – עוצר את המטוס, מצערת לסרק, בלימה ופינוי המסלול</span></label></div>
+<div class="item"><input type="checkbox" id="gbr6"><label for="gbr6"><span style="font-weight:bold">• תקלה במהלך הניתוק – שיקול דעת (ביטול או שדה לנ"א). אם הלך מנוע לאחר המראה, לשמור מהירות 65 ופניייה ימינה לכיוון השדות (ב-10 השדה ישר ולפנים)</span></label></div>
+<div class="item"><input type="checkbox" id="gbr7"><label for="gbr7"><span style="font-weight:bold">• תקלה אחרי ניתוק – שדה לנ"א. כל תקלה אחרת כולל אש, טיפוס לגובה בטוח וחזרה לנחיתה</span></label></div>
 <div style="text-align:center; margin-top:20px;">
     <button onclick="const pretakeoffSubTab = document.querySelector('#sub-checks .sub-tab:nth-child(6)'); runSub('pretakeoff', pretakeoffSubTab); pretakeoffSubTab.closest('.sub-tabs-container').style.display = 'flex'; setTimeout(() => { const el = document.getElementById('gpt25'); if(el) el.scrollIntoView({behavior:'smooth', block:'center'}); }, 100);" style="background:#2c3e50; color:white; border:none; padding:12px 50px; border-radius:8px; font-size:1.1rem; font-weight:bold; cursor:pointer;">אישור</button>
 </div>`,
@@ -525,16 +527,17 @@
 <div class="item"><label>3. מאייד – אוויר חם כנדרש</label></div>`,
             prelanding: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">צלע עם הרוח</p>
 <div class="item"><label>1. משאבת תיחול – נעולה</label></div>
-<div class="item"><label>2. מתג ראשי – ON</label></div>
+<div class="item"><label>2. מאסטר – BOTH</label></div>
 <div class="item"><label>3. מצתים – BOTH</label></div>
-<div class="item"><label>4. אור נחיתה – הדלק</label></div>
+<div class="item"><label>4. כיוון, מצב אף, גובה, מרחק מהמסלול</label></div>
 <div class="item"><label>5. אוויר למאייד – קר</label></div>
 <div class="item"><label>6. תערובת – עשירה</label></div>
 <div class="item"><label>7. מדפים – למעלה</label></div>
-<div class="item"><label>8. ברז דלק פתוח – שניהם</label></div>
-<div class="item"><label>9. חגורות – נעולות</label></div>
-<div class="item"><label>10. דלתות – נעולות</label></div>
-<div class="item"><label>11. בלמים – בדוק תקינות ("פמפם" מספר פעמים)</label></div>
+<div class="item"><label>8. כיוון, מצב אף, גובה, מרחק מהמסלול</label></div>
+<div class="item"><label>9. ברז דלק פתוח – שניהם</label></div>
+<div class="item"><label>10. בלמים – בדוק תקינות ("פמפם" מספר פעמים)</label></div>
+<div class="item"><label>11. חגורות – נעולות</label></div>
+<div class="item"><label>12. דלתות – נעולות</label></div>
 <p style="font-size:0.9rem; font-weight:bold; margin: 16px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">צלע בסיס</p>
 <div class="item"><label>1. אוויר למאייד – חם</label></div>
 <div class="item"><label>2. מצערת – לסרק / 1500</label></div>
@@ -543,21 +546,21 @@
             landing: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">נחיתה רגילה</p>
 <div class="item"><label>1. מהירות – 65 קשר</label></div>
 <div class="item"><label>2. מדפים – כנדרש (בגובה 500 רגל מדפים מטה מלא)</label></div>
-<div class="item"><label>3. נגיעה – גלגלים ראשיים קודם</label></div>
+<div class="item"><label>3. נגיעה – כן נסע ראשי תחילה</label></div>
 <div class="item"><label>4. ריצת נחיתה – הורד גלגל אף בעדינות</label></div>
 <div class="item"><label>5. בלימה – המינימום הנדרש</label></div>
 <p style="font-size:0.9rem; font-weight:bold; margin: 16px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">נחיתה קצרה</p>
 <div class="item"><label>1. מדפים – 30 מעלות</label></div>
 <div class="item"><label>2. מהירות – 54 קשר (עד להצפה)</label></div>
 <div class="item"><label>3. מצערת – סרק לאחר מעבר מכשול</label></div>
-<div class="item"><label>4. נגיעה – גלגלים ראשיים קודם</label></div>
+<div class="item"><label>4. נגיעה – כן נסע ראשי תחילה</label></div>
 <div class="item"><label>5. בלמים – הפעל בכבדות</label></div>
 <p style="font-size:0.9rem; font-weight:bold; margin: 16px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">הליכה סביב</p>
-<div class="item"><label>1. מצערת – פתח מלא ואף מעל האופק</label></div>
+<div class="item"><label>1. מצערת – פתח מלא והחזק את האף מעט מעל האופק</label></div>
 <div class="item"><label>2. מאייד – קר</label></div>
 <div class="item"><label>3. מדפים – קפל ל- 20°</label></div>
 <div class="item"><label>4. מהירות טיפוס – 55-60 קשר</label></div>
-<div class="item"><label>5. מדפים – 10° (עד למעבר מכשול). קפל ל- 0° (לאחר הגעה לגובה בטוח ולמהירות 65 קשר)</label></div>`,
+<div class="item"><label>5. מדפים – בשלבים: 10° (עד למעבר מכשול) ואז בשלבים קפל ל- 0° (לאחר הגעה לגובה בטוח ולמהירות 65 קשר)</label></div>`,
             postlanding: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">אחרי נחיתה (פינוי מסלול)</p>
 <div class="item"><input type="checkbox" id="gpol1"><label for="gpol1">מאייד – קר</label></div>
 <div class="item"><input type="checkbox" id="gpol2"><label for="gpol2">מדפים – למעלה</label></div>
@@ -602,13 +605,13 @@
 <div class="item" style="background:#FFFF00;"><label>1. מצערת – העבר לסרק</label></div>
 <div class="item" style="background:#FFFF00;"><label>2. בלמים – הפעל</label></div>
 <div class="item"><label>3. מדפים – הרם</label></div>
-<div class="item"><label>4. תערובת דלק – לענייה</label></div>
+<div class="item"><label>4. תערובת דלק – משוך להדממה</label></div>
 <div class="item"><label>5. מצתים – OFF</label></div>
 <div class="item"><label>6. מפסק ראשי – OFF</label></div>
 </div>
-<div class="accordion-header" onclick="toggleAccordion(this)">אובדן מנוע מיד אחרי ניחוק</div>
+<div class="accordion-header" onclick="toggleAccordion(this)">אובדן מנוע מיד אחרי ניתוק</div>
 <div class="accordion-body">
-<div class="item" style="background:#FFFF00;"><label>1. מהירות – 70 קשר (מדפים למעלה) 65 קשר (מדפים למטה)</label></div>
+<div class="item" style="background:#FFFF00;"><label>1. מהירות – 65 קשר</label></div>
 <div class="item"><label>2. תערובת – משוך להדממה</label></div>
 <div class="item"><label>3. ברז דלק – סגור (משוך עד הסוף החוצה)</label></div>
 <div class="item"><label>4. מצתים - OFF</label></div>
@@ -618,12 +621,13 @@
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">אובדן מנוע בטיסה- נסיונות התנעה</div>
 <div class="accordion-body">
-<div class="item" style="background:#FFFF00;"><label>1. מהירות – 65 קשר</label></div>
-<div class="item"><label>2. ברז דלק – ON (דחוף מלא פנימה)</label></div>
-<div class="item"><label>3. בורר דלק – שניהם</label></div>
-<div class="item"><label>4. תערובת – עשירה (אם המנוע לא התניע)</label></div>
-<div class="item"><label>5. מפסק הצתה – BOTH (או START אם המדחף עצר)</label></div>
-<div class="item"><label>6. אם המדחף סובב, המנוע יותנע מעצמו מספר שניות. אם המדחף עצר – סובב מתג הצתה ל- START, דחוף לאט את המצערת פנימה ממצב סרק וטיפול לקבלת פעולה חלקה</label></div>
+<div class="item" style="background:#FFFF00;"><label>1. מהירות – 60 קשר</label></div>
+<div class="item"><label>5. אוויר למאייד – חם</label></div>
+<div class="item"><label>2. תיחול – נעול</label></div>
+<div class="item"><label>3. ברז דלק – ON (דחוף מלא פנימה)</label></div>
+<div class="item"><label>4. בורר דלק – שניהם</label></div>
+<div class="item"><label>6. תערובת – עשירה</label></div>
+<div class="item"><label>7. מפסק הצתה – BOTH (או START אם המדחף עצר)</label></div>
 </div>`,
             'comm-failure': `<div class="item"><label>1. אם אובדן הקשר אירע בתחום הפיקוח של שדה ההמראה ה-CTR, יש לחזור לנחיתה לפי כללי השדה. אם הדבר אינו בר ביצוע ימשיך לפי תכנית הטיסה ולפי הנהלים הבאים:</label></div>
 <div class="item"><label>2. טרנספונדר 7600 - Mode C</label></div>
@@ -663,7 +667,7 @@
 <div class="item"><label>6. 5) נחת לאחר קבלת אור ירוק מהמגדל.</label></div>
 <div class="item"><label>7. הערה: המגדל יתמיד בשידור הוראות לכלי הטיס.</label></div>
 </div>`,
-            'stall': `<div class="item"><label style="color:red;">1. בד"ח לפני הזדקרות</label></div>
+            'stall': `<div class="item" style="background:#FFFF00;"><label>1. <span style="font-weight:bold">בד"ח לפני הזדקרות</span></label></div>
 <div class="item"><label>2. ברז דלק פתוח</label></div>
 <div class="item"><label>3. כמות דלק + מכשירי מנוע</label></div>
 <div class="item"><label>4. משאבת תיחול נעולה</label></div>
@@ -677,7 +681,7 @@
 <div class="item"><label>12. אין חפצים חופשיים מאחורה</label></div>
 <div class="item"><label>13. שדה לנחיתת אונס</label></div>
 <div class="item"><label>14. פניית ניקוי 180 או 2×90</label></div>
-<div class="item"><label>15. בחירת שדה לנ.א.</label></div>
+<div class="item" style="background:#FFFF00;"><label>15. <span style="font-weight:bold">בחירת שדה לנ.א.:</span></label></div>
 <div class="item"><label>16. רוח</label></div>
 <div class="item"><label>17. אורך</label></div>
 <div class="item"><label>18. מכשולים</label></div>
@@ -691,9 +695,9 @@
 <div class="item"><label>6. מצערת קדימה (במקרה אמת)</label></div>
 <div class="item"><label>7. תערובת עשירה</label></div>
 <div class="item"><label>8. מדפים למעלה</label></div>
-<div class="item"><label>9. כל נוסעי המטוס חגורים.</label></div>
-<div class="item"><label>10. <span style="font-weight:bold;color:#FF0000">בחר שדה – תכנן את נקודת הנגיע , נק' ה500 מעפש ונק' ה1000 מעפש</span></label></div>
-<div class="item"><label>11. <span style="font-weight:bold;color:#FF0000">נסיונות תיחול:</span></label></div>
+<div class="item"><label>9. חגורות – וודא חגירה לרבות חגורת כתף</label></div>
+<div class="item" style="background:#FFFF00;"><label>10. בחר שדה – תכנן את נקודת הנגיע , נק' ה500 מעפש ונק' ה1000 מעפש</label></div>
+<div class="item"><label>11. <span style="font-weight:bold;color:#FF0000">נסיונות לאיתור תקלה ותיחול</span></label></div>
 <div class="item"><label>12. תיחול – נעול</label></div>
 <div class="item"><label>13. מתג ראשי – ON</label></div>
 <div class="item"><label>14. מצתים – BOTH</label></div>
@@ -703,13 +707,15 @@
 <div class="item"><label>18. ברז דלק – פתוח</label></div>
 <div class="item"><label>19. <span style="font-weight:bold;color:#FF0000">דווח MAYDAY וטרנספונדר ל-7700</span></label></div>
 <div class="item"><label>20. <span style="font-weight:bold;color:#FF0000">סגירות בגובה 1000:</span></label></div>
-<div class="item"><label>21. תערובת – להדממה.</label></div>
-<div class="item"><label>22. ברז דלק – סגור.</label></div>
-<div class="item"><label>23. מצתים – מופסקים.</label></div>
-<div class="item"><label>24. דלתות – פתח.</label></div>
-<div class="item"><label>25. לאחר הורדת המדפים – מפסק ראשי סגור.</label></div>
-<div class="item"><label>26. נחת עם מדפים מלא מטה, במהירות נמוכה ועם זנב נמוך (אף גבוה) כדי להקטין את סכנת ההתהפכות.</label></div>
-<div class="item" style="background:#FFFF00;"><label>27. <span style="font-weight:bold;color:#FF0000">אין להפנות גב לשדה בשום מקרה! אין לנסות לפנות לאחור בגובה נמוך!</span></label></div>`,
+<div class="item"><label>21. ברז דלק – סגור.</label></div>
+<div class="item"><label>22. תערובת – להדממה.</label></div>
+<div class="item"><label>23. מצתים – OFF</label></div>
+<div class="item"><label>24. מדפים – למטה</label></div>
+<div class="item"><label>25. לאחר הורדת המדפים – מפסק ראשי OFF</label></div>
+<div class="item"><label>26. דלתות – פתח.</label></div>
+<div class="item"><label>27. הנח יד על המצח לשם הגנה על הראש</label></div>
+<div class="item"><label>28. נחת עם מדפים מלא מטה, במהירות נמוכה ועם זנב נמוך (אף גבוה) כדי להקטין את סכנת ההתהפכות.</label></div>
+<div class="item" style="background:#FFFF00;"><label>29. <span style="font-weight:bold;color:#FF0000">אין להפנות גב לשדה בשום מקרה! אין לנסות לפנות לאחור בגובה נמוך!</span></label></div>`,
             'power-failure': `<div class="accordion-header" onclick="toggleAccordion(this)">התקרחות קרבורטור</div>
 <div class="accordion-body">
 <div class="item"><label>1. ירידה הדרגתית בסל"ד והשתנקות מנוע עשויים להיגרם מהיווצרות קרח בקרבורטור</label></div>
@@ -774,13 +780,13 @@
 <div class="item"><label>12. <span style="font-weight:bold;color:#FF0000">הפחת הספק מנוע</span></label></div>
 <div class="item"><label>13. <span style="font-weight:bold;color:#FF0000">אם חום המנוע אינו יורד — נחת בשדה הקרוב</span></label></div>
 </div>`,
-            'squawk': `<div class="item"><label style="color:red;">1. נחיתת חרום בים (ציוף)</label></div>
+            'squawk': `<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">נחיתת חרום בים (ציוף)</span></label></div>
 <div class="item"><label>2. רדיו – שדר MAYDAY על תדר 121.5 מגה-הרץ תוך ציון מיקום וכוונות. העבר טרנספונדר לקוד חרום 7700</label></div>
 <div class="item"><label>3. חפצים כבדים בתא הנוסעים והמטען – השלך החוצה או אבטח למקומם</label></div>
 <div class="item"><label>4. מושבים וחגורות – הדק</label></div>
-<div class="item"><label>5. <span style="font-weight:bold;color:#FF0000">גישה לנחיתה: ברוח חזקה, ים סוער – לתוך הרוח. רוחות קלות, גלים גבוהים – במקביל לגלים</span></label></div>
-<div class="item"><label>6. <span style="font-weight:bold;color:#FF0000">מדפים – 30 מעלות</span></label></div>
-<div class="item"><label>7. <span style="font-weight:bold;color:#FF0000">כוח מנוע – הנמך בשיעור הנמכה של 300 רגל/דקה במהירות של 55 קשר. באם אין כוח מנוע הנמך במהירות 65 קשרי עם מדפים מטה</span></label></div>
+<div class="item"><label>5. גישה לנחיתה: ברוח חזקה, ים סוער – לתוך הרוח. רוחות קלות, גלים גבוהים – במקביל לגלים</label></div>
+<div class="item"><label>6. מדפים – 30 מעלות</label></div>
+<div class="item"><label>7. כוח מנוע – הנמך בשיעור הנמכה של 300 רגל/דקה במהירות של 55 קשר. באם אין כוח מנוע הנמך במהירות 65 קשרי עם מדפים מטה</label></div>
 <div class="item"><label>8. דלתות – שחרר נעילה</label></div>
 <div class="item"><label>9. נגיעה – התיישר בגובה הים במהירות הנמכה</label></div>
 <div class="item"><label>10. השתמש בחפץ רך (מעיל, תיק וכו') בתור כרית הגנה לפנים</label></div>
@@ -788,13 +794,13 @@
 <div class="item"><label>12. חגורות הצלה וסירת הצלה – נפח מחוץ למטוס</label></div>`,
             'fire': `<div class="accordion-header" onclick="toggleAccordion(this)">אש בזמן ההתנעה על הקרקע</div>
 <div class="accordion-body">
-<div class="item" style="background:#FFFF00;"><label>1. <span style="font-weight:bold">התנעה – המשך על מנת לשאוב את הלהבות ושאריות הדלק אל תוך המנוע</span></label></div>
-<div class="item"><label>2. אם המנוע תפס:</label></div>
+<div class="item" style="background:#FFFF00;"><label>1. <span style="font-weight:bold">התנעה – המשך על מנת לשאוב את הלהבות ושאריות הדלק אל תוך המנוע ובכדי לשרוף את שאריות הדלק במאייד ובמנוע</span></label></div>
+<div class="item"><label>2. אם המנוע הניע:</label></div>
 <div class="item"><label>3. סל"ד – 1700 למספר דקות</label></div>
 <div class="item"><label>4. מנוע – דומם ובדוק נזקים</label></div>
-<div class="item"><label>5. אם המנוע לא תפס:</label></div>
+<div class="item"><label>5. אם המנוע לא הניע:</label></div>
 <div class="item" style="background:#FFFF00;"><label>6. מצערת – פתח מלא</label></div>
-<div class="item" style="background:#FFFF00;"><label>7. תערובת – להדממה</label></div>
+<div class="item" style="background:#FFFF00;"><label>7. תערובת – משוך להדממה</label></div>
 <div class="item" style="background:#FFFF00;"><label>8. התנעה – המשך לנסות</label></div>
 <div class="item"><label>9. מטף כיבוי אש – הפעל</label></div>
 <div class="item"><label>10. ברז דלק – סגור (משוך עד הסוף החוצה)</label></div>
@@ -818,16 +824,14 @@
 <div class="item" style="background:#FFFF00;"><label>1. מפסק ראשי – OFF</label></div>
 <div class="item" style="background:#FFFF00;"><label>2. פתחי אוורור וחימום – סגור</label></div>
 <div class="item" style="background:#FFFF00;"><label>3. מטף כיבוי אש – הפעל</label></div>
-<div class="item"><label>4. מתג אוויוניקה – OFF</label></div>
+<div class="item"><label>4. <span style="font-weight:bold">אזהרה: לאחר הפעלת המטף בתא סגור יש לאוורר את התא. אוורר את התא כשהאש כבויה בוודאות</span></label></div>
 <div class="item"><label>5. כל המפסקים (למעט הצתה ) – OFF</label></div>
-<div class="item"><label>6. <span style="font-weight:bold">אזהרה: לאחר הפעלת המטף בתא סגור יש לאוורר את התא. אוורר את התא כשהאש כבויה בוודאות</span></label></div>
-<div class="item"><label>7. פתחי אוורור תא/חימום – פתח רק כאשר האש כבויה לחלוטין.</label></div>
-<div class="item"><label>8. אם האש החשמלית כבתה ויש צורך בחשמל להמשך הטיסה:</label></div>
-<div class="item"><label>9. מפסק ראשי – ON</label></div>
-<div class="item"><label>10. מנתקי מעגלים – אתר. מנתק שקפץ – אל תחזיר.</label></div>
-<div class="item"><label>11. מתגי רדיו – כבה</label></div>
-<div class="item"><label>12. מתג אוויוניקה – ON</label></div>
-<div class="item"><label>13. מפסקי חשמל/רדיו – הפעל בזה אחר זה, עם מרווחי זמן, עד שתזהה את המעגל המנותק</label></div>
+<div class="item"><label>6. אם האש החשמלית כבתה ויש צורך בחשמל להמשך הטיסה:</label></div>
+<div class="item"><label>7. מפסק ראשי – ON</label></div>
+<div class="item"><label>8. מנתקי מעגלים – בדוק. פיוז שקפץ – אל תחזיר.</label></div>
+<div class="item"><label>9. מתגי רדיו – OFF</label></div>
+<div class="item"><label>10. מפסקי חשמל/רדיו – הפעל בזה אחר זה, עם מרווחי זמן, עד שתזהה את המעגל המנותק</label></div>
+<div class="item"><label>11. פתחי אוורור תא/חימום – <span style="font-weight:bold">פתח רק כאשר האש כבויה לחלוטין</span>.</label></div>
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">אש בתא</div>
 <div class="accordion-body">
@@ -839,14 +843,13 @@
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">אש בכנף</div>
 <div class="accordion-body">
-<div class="item" style="background:#FFFF00;"><label>1. אורות – OFF</label></div>
-<div class="item" style="background:#FFFF00;"><label>2. חימום פיטו – OFF</label></div>
+<div class="item" style="background:#FFFF00;"><label>1. חימום פיטו – OFF</label></div>
 <div class="item" style="background:#FFFF00;"><label>3. אורות STROBE - OFF</label></div>
 <div class="item" style="background:#FFFF00;"><label>4. רגל לאש - סטיק נגדי!</label></div>
 <div class="item"><label>5. <span style="font-weight:bold">הערה: בצע החלקה כדי למנוע מהלהבות להתקרב למיכלי הדלק ולתא. נחת בהקדם האפשרי תוך שימוש במדפים רק במידת הנדרש ובפיינל ובנגיעה.</span></label></div>
 <div class="item"><label>6. דיווח - חוזר לנחיתה בהרצליה</label></div>
 </div>`,
-            'spin': `<div class="item" style="background:#FFFF00;"><label>1. כניסה בלתי מתוכננת למצב התקרחות</label></div>
+            'spin': `<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">כניסה בלתי מתוכננת למצב התקרחות</span></label></div>
 <div class="item" style="background:#FFFF00;"><label>2. חימום פיטו – ON</label></div>
 <div class="item" style="background:#FFFF00;"><label>3. פנה ו/או שנה גובה בכדי להתרחק מהאזור עם טמפרטורת ההתקרחות</label></div>
 <div class="item" style="background:#FFFF00;"><label>4. הפעל חימום תא במלוא העוצמה והפעל את מערכת ההפשרה בכדי להגביר את זרימת האוויר לשמשה למקסימום</label></div>
@@ -859,35 +862,31 @@
 <div class="item"><label>11. נחת בהחלקה במידה והחלקה קרח משמעותית מהצטברות קרח במידת האפשר</label></div>
 <div class="item"><label>12. שמור מהירות 65-75 קשר במהלך הגישה בתלולות הקרח שהצטברה</label></div>
 <div class="item"><label>13. בצע נחיתה שטוחה</label></div>`,
-            'static-block': `<div class="item" style="background:#FFFF00;"><label>1. חשד לקריאה מוטעית של המכשירים</label></div>
+            'static-block': `<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">חשד לקריאה מוטעית של המכשירים</span></label></div>
 <div class="item"><label>2. מתג מקור לחץ סטטי חלופי – הפעל</label></div>
 <div class="item"><label>3. הערה: במצב חרום במטוס שאינו מצויד במקור סטטי חלופי, ניתן לספק לחץ לתא על ידי שבירת הזכוכית במחוון שיעור ההנמכה/נסיקה</label></div>
 <div class="item"><label>4. מהירות – עיין בטבלאות המתאימות בפרק 5 בספר המטוס</label></div>`,
-            'puncture': `<div class="item" style="background:#FFFF00;"><label>1. נחיתה עם גלגל מפונצ'ר</label></div>
+            'puncture': `<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">נחיתה עם גלגל מפונצ'ר</span></label></div>
 <div class="item"><label>2. גישה – רגילה</label></div>
 <div class="item"><label>3. נגיעה – גע עם הגלגל הטוב תחילה. החזק את המטוס ללא נגיעת הגלגל המפונצ'ר בקרקע תוך שימוש ככל הניתן במאזנות</label></div>`,
             'electrical': `<div class="accordion-header" onclick="toggleAccordion(this)">טעינת יתר</div>
 <div class="accordion-body">
 <div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">מד הטעינה מראה טעינת יתר (סטייה במלוא הטווח)</span></label></div>
-<div class="item" style="background:#FFFF00;"><label>2. אלטרנטור – OFF</label></div>
-<div class="item" style="background:#FFFF00;"><label>3. ציוד חשמלי לא-חיוני – OFF</label></div>
-<div class="item" style="background:#FFFF00;"><label>4. הפסק טיסה בהקדם האפשרי</label></div>
+<div class="item"><label>2. אלטרנטור – OFF</label></div>
+<div class="item"><label>4. מכשור חשמלי לא-חיוני – OFF</label></div>
+<div class="item" style="background:#FFFF00;"><label>5. נחת בהקדם האפשרי</label></div>
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">נורית חוסר טעינה נדלקת – VOLTS נמוך בפנל / וכן מד הטעינה מראה פריקה</div>
 <div class="accordion-body">
-<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">מתח נמוך</span></label></div>
-<div class="item"><label>2. וכן מד הטעינה מראה פריקה</label></div>
-<div class="item"><label>3. חווי זה יתכן במצב של סל"ד נמוך ועומס חשמלי גבוה (כמו בהסעה). במקרה זה אין צורך באיפוס המפסק הראשי.</label></div>
-<div class="item"><label>4. מתג אוויוניקה- כבה</label></div>
-<div class="item"><label>5. מנתק מעגל אלטרנטור- בפנים</label></div>
-<div class="item"><label>6. מפסק ראשי – OFF (שני הצדדים)</label></div>
-<div class="item"><label>7. מפסק ראשי – ON</label></div>
-<div class="item"><label>8. בדוק מכווני מתח</label></div>
-<div class="item"><label>9. מתג אוויוניקה – הפעל.</label></div>
-<div class="item"><label>10. אם הנורית נדלקת שוב:</label></div>
-<div class="item"><label>11. אלטרנטור – OFF</label></div>
-<div class="item"><label>12. רדיו ומערכות חשמליות לא חיוניות – OFF</label></div>
-<div class="item" style="background:#FFFF00;"><label>13. <span style="font-weight:bold;color:#FF0000">טיסה – הפסק בהקדם אפשרי</span></label></div>
+<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">נורית חוסר טעינה נדלקת במהלך הטיסה (מד טעינה מראה פריקה)</span></label></div>
+<div class="item"><label>2. <span style="font-weight:bold">הערה: </span>נורית חוסר הטעינה עלולה להידלק במצבים של סל"ד נמוך עם עומס חשמלי גבוה, דוגמת הסעה בסל"ד נמוך. במקרה כזה אין צורך לאפס את המפסק הראשי מכיוון שלא התקיים מצב של טעינת יתר שיגרום להפסקת פעולת האלטרנטור</label></div>
+<div class="item"><label>3. מנתק מעגל אלטרנטור- זהה וודא בפנים</label></div>
+<div class="item"><label>4. מפסק ראשי – OFF (שני הצדדים)</label></div>
+<div class="item"><label>5. מפסק ראשי – ON</label></div>
+<div class="item"><label>7. אם הנורית נדלקת שוב:</label></div>
+<div class="item"><label>8. אלטרנטור – OFF</label></div>
+<div class="item"><label>9. רדיו ומערכות חשמליות לא חיוניות – OFF</label></div>
+<div class="item" style="background:#FFFF00;"><label>10. <span style="font-weight:bold;color:#FF0000">טיסה – הפסק בהקדם אפשרי</span></label></div>
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">כשל במערכת וואקום</div>
 <div class="accordion-body">
@@ -1004,7 +1003,7 @@
 <div class="item"><input type="checkbox" id="gps18"><label for="gps18">ברז דלק – פתוח</label></div>
 <div class="item"><input type="checkbox" id="gps19"><label for="gps19">הגאים – וודא חופשיות תנועה וכיוון נכון</label></div>
 <div class="item"><input type="checkbox" id="gps20"><label for="gps20">מפסק ראשי – ON</label></div>
-<div class="item"><input type="checkbox" id="gps21"><label for="gps21">רדיו ל-ON, <span style="font-weight:bold;color:#FF0000">בקש רשות התנעה</span> (קלירנס)</label></div>
+<div class="item"><input type="checkbox" id="gps21"><label for="gps21">רדיו ל-ON, <span style="font-weight:bold;color:#FF0000">בקש רשות התנעה</span> <span style="font-weight:bold">(קלירנס)</span></label></div>
 <div class="item"><input type="checkbox" id="gps22"><label for="gps22">רדיו ל-OFF</label></div>
 <div class="item"><input type="checkbox" id="gps23"><label for="gps23">מפסק ראשי – OFF</label></div>`,
             engine: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">התנעה</p>
@@ -1052,18 +1051,18 @@
 <div class="item"><input type="checkbox" id="gpt22"><label for="gpt22">דלתות – סגורות ונעולות</label></div>
 <div class="item"><input type="checkbox" id="gpt23"><label for="gpt23">הגאים חופשיים</label></div>
 <div class="item"><input type="checkbox" id="gpt24"><label for="gpt24"><span style="font-weight:bold;color:#FF0000">תדרי רדיו וניווט מכוילים</span></label></div>
-<div class="item"><input type="checkbox" id="gpt25"><label for="gpt25" style="cursor:pointer;" onclick="const briefingSubTab = document.querySelector('#sub-checks .sub-tab:nth-child(7)'); briefingSubTab.closest('.sub-tabs-container').style.display = 'flex'; runSub('briefing', briefingSubTab);">לחץ כאן לתדריך לפני המראה</label></div>
+<div class="item"><input type="checkbox" id="gpt25"><label for="gpt25" style="cursor:pointer;" onclick="const briefingSubTab = document.querySelector('#sub-checks .sub-tab:nth-child(7)'); briefingSubTab.closest('.sub-tabs-container').style.display = 'flex'; runSub('briefing', briefingSubTab);"><span style="font-weight:bold;color:#FF4000">לחץ כאן לתדריך לפני המראה</span></label></div>
 <div class="item"><input type="checkbox" id="gpt26"><label for="gpt26">צלע סופית נקייה</label></div>
 <div class="item"><input type="checkbox" id="gpt27"><label for="gpt27"><span style="font-weight:bold;color:#FF0000">בקש רשות להתיישר – מוכן לעזיבה</span></label></div>`,
             briefing: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">תדריך לפני המראה</p>
-<div class="item"><input type="checkbox" id="gbr1"><label for="gbr1">• מאיפה באה הרוח</label></div>
-<div class="item"><input type="checkbox" id="gbr2"><label for="gbr2">• כיוון המראה (מסלול 28/10)</label></div>
-<div class="item"><input type="checkbox" id="gbr3"><label for="gbr3">• לאיפה יוצאים</label></div>
-<div class="item"><input type="checkbox" id="gbr4"><label for="gbr4">• ניתוק במהירות 55 קשר</label></div>
+<div class="item"><input type="checkbox" id="gbr1"><label for="gbr1">מאיפה באה הרוח</label></div>
+<div class="item"><input type="checkbox" id="gbr2"><label for="gbr2">כיוון המראה (מסלול 28/10)</label></div>
+<div class="item"><input type="checkbox" id="gbr3"><label for="gbr3">לאיפה יוצאים</label></div>
+<div class="item"><input type="checkbox" id="gbr4"><label for="gbr4">ניתוק במהירות 55 קשר</label></div>
 <p style="font-size:0.9rem; font-weight:bold; margin: 16px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">חירומים</p>
-<div class="item"><input type="checkbox" id="gbr5"><label for="gbr5"><span style="color:#FF0000">• תקלה על המסלול (עשן, אש, אובדן שליטה כיווני, מד מהירות לא מגיב, פנצ'ר, הגאים) – ביטול המראה. כל תקלה עד הניתוק – עוצר את המטוס, מצערת לסרק, בלימה ופינוי המסלול</span></label></div>
-<div class="item"><input type="checkbox" id="gbr6"><label for="gbr6"><span style="color:#FF0000">• תקלה במהלך הניתוק – שיקול דעת (ביטול או שדה לנ"א). אם הלך מנוע לאחר המראה, לשמור מהירות 65 ופניייה ימינה לכיוון השדות (ב-10 השדה ישר ולפנים)</span></label></div>
-<div class="item"><input type="checkbox" id="gbr7"><label for="gbr7"><span style="color:#FF0000">• תקלה אחרי ניתוק – שדה לנ"א. כל תקלה אחרת כולל אש, טיפוס לגובה בטוח וחזרה לנחיתה</span></label></div>
+<div class="item"><input type="checkbox" id="gbr5"><label for="gbr5"><span style="font-weight:bold">• תקלה על המסלול (עשן, אש, אובדן שליטה כיווני, מד מהירות לא מגיב, פנצ'ר, הגאים) – ביטול המראה. כל תקלה עד הניתוק – עוצר את המטוס, מצערת לסרק, בלימה ופינוי המסלול</span></label></div>
+<div class="item"><input type="checkbox" id="gbr6"><label for="gbr6"><span style="font-weight:bold">• תקלה במהלך הניתוק – שיקול דעת (ביטול או שדה לנ"א). אם הלך מנוע לאחר המראה, לשמור מהירות 65 ופניייה ימינה לכיוון השדות (ב-10 השדה ישר ולפנים)</span></label></div>
+<div class="item"><input type="checkbox" id="gbr7"><label for="gbr7"><span style="font-weight:bold">• תקלה אחרי ניתוק – שדה לנ"א. כל תקלה אחרת כולל אש, טיפוס לגובה בטוח וחזרה לנחיתה</span></label></div>
 <div style="text-align:center; margin-top:20px;">
     <button onclick="const pretakeoffSubTab = document.querySelector('#sub-checks .sub-tab:nth-child(6)'); runSub('pretakeoff', pretakeoffSubTab); pretakeoffSubTab.closest('.sub-tabs-container').style.display = 'flex'; setTimeout(() => { const el = document.getElementById('gpt25'); if(el) el.scrollIntoView({behavior:'smooth', block:'center'}); }, 100);" style="background:#2c3e50; color:white; border:none; padding:12px 50px; border-radius:8px; font-size:1.1rem; font-weight:bold; cursor:pointer;">אישור</button>
 </div>`,
@@ -1098,16 +1097,17 @@
 <div class="item"><label>3. מאייד – אוויר חם כנדרש</label></div>`,
             prelanding: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">צלע עם הרוח</p>
 <div class="item"><label>1. משאבת תיחול – נעולה</label></div>
-<div class="item"><label>2. מתג ראשי – ON</label></div>
+<div class="item"><label>2. מאסטר – BOTH</label></div>
 <div class="item"><label>3. מצתים – BOTH</label></div>
-<div class="item"><label>4. אור נחיתה – הדלק</label></div>
+<div class="item"><label>4. כיוון, מצב אף, גובה, מרחק מהמסלול</label></div>
 <div class="item"><label>5. אוויר למאייד – קר</label></div>
 <div class="item"><label>6. תערובת – עשירה</label></div>
 <div class="item"><label>7. מדפים – למעלה</label></div>
-<div class="item"><label>8. ברז דלק פתוח – שניהם</label></div>
-<div class="item"><label>9. חגורות – נעולות</label></div>
-<div class="item"><label>10. דלתות – נעולות</label></div>
-<div class="item"><label>11. בלמים – בדוק תקינות ("פמפם" מספר פעמים)</label></div>
+<div class="item"><label>8. כיוון, מצב אף, גובה, מרחק מהמסלול</label></div>
+<div class="item"><label>9. ברז דלק פתוח – שניהם</label></div>
+<div class="item"><label>10. בלמים – בדוק תקינות ("פמפם" מספר פעמים)</label></div>
+<div class="item"><label>11. חגורות – נעולות</label></div>
+<div class="item"><label>12. דלתות – נעולות</label></div>
 <p style="font-size:0.9rem; font-weight:bold; margin: 16px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">צלע בסיס</p>
 <div class="item"><label>1. אוויר למאייד – חם</label></div>
 <div class="item"><label>2. מצערת – לסרק / 1500</label></div>
@@ -1116,21 +1116,21 @@
             landing: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">נחיתה רגילה</p>
 <div class="item"><label>1. מהירות – 65 קשר</label></div>
 <div class="item"><label>2. מדפים – כנדרש (בגובה 500 רגל מדפים מטה מלא)</label></div>
-<div class="item"><label>3. נגיעה – גלגלים ראשיים קודם</label></div>
+<div class="item"><label>3. נגיעה – כן נסע ראשי תחילה</label></div>
 <div class="item"><label>4. ריצת נחיתה – הורד גלגל אף בעדינות</label></div>
 <div class="item"><label>5. בלימה – המינימום הנדרש</label></div>
 <p style="font-size:0.9rem; font-weight:bold; margin: 16px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">נחיתה קצרה</p>
 <div class="item"><label>1. מדפים – 30 מעלות</label></div>
 <div class="item"><label>2. מהירות – 54 קשר (עד להצפה)</label></div>
 <div class="item"><label>3. מצערת – סרק לאחר מעבר מכשול</label></div>
-<div class="item"><label>4. נגיעה – גלגלים ראשיים קודם</label></div>
+<div class="item"><label>4. נגיעה – כן נסע ראשי תחילה</label></div>
 <div class="item"><label>5. בלמים – הפעל בכבדות</label></div>
 <p style="font-size:0.9rem; font-weight:bold; margin: 16px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">הליכה סביב</p>
-<div class="item"><label>1. מצערת – פתח מלא ואף מעל האופק</label></div>
+<div class="item"><label>1. מצערת – פתח מלא והחזק את האף מעט מעל האופק</label></div>
 <div class="item"><label>2. מאייד – קר</label></div>
 <div class="item"><label>3. מדפים – קפל ל- 20°</label></div>
 <div class="item"><label>4. מהירות טיפוס – 55-60 קשר</label></div>
-<div class="item"><label>5. מדפים – 10° (עד למעבר מכשול). קפל ל- 0° (לאחר הגעה לגובה בטוח ולמהירות 65 קשר)</label></div>`,
+<div class="item"><label>5. מדפים – בשלבים: 10° (עד למעבר מכשול) ואז בשלבים קפל ל- 0° (לאחר הגעה לגובה בטוח ולמהירות 65 קשר)</label></div>`,
             postlanding: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">אחרי נחיתה (פינוי מסלול)</p>
 <div class="item"><input type="checkbox" id="gpol1"><label for="gpol1">מאייד – קר</label></div>
 <div class="item"><input type="checkbox" id="gpol2"><label for="gpol2">מדפים – למעלה</label></div>
@@ -1175,13 +1175,13 @@
 <div class="item" style="background:#FFFF00;"><label>1. מצערת – העבר לסרק</label></div>
 <div class="item" style="background:#FFFF00;"><label>2. בלמים – הפעל</label></div>
 <div class="item"><label>3. מדפים – הרם</label></div>
-<div class="item"><label>4. תערובת דלק – לענייה</label></div>
+<div class="item"><label>4. תערובת דלק – משוך להדממה</label></div>
 <div class="item"><label>5. מצתים – OFF</label></div>
 <div class="item"><label>6. מפסק ראשי – OFF</label></div>
 </div>
-<div class="accordion-header" onclick="toggleAccordion(this)">אובדן מנוע מיד אחרי ניחוק</div>
+<div class="accordion-header" onclick="toggleAccordion(this)">אובדן מנוע מיד אחרי ניתוק</div>
 <div class="accordion-body">
-<div class="item" style="background:#FFFF00;"><label>1. מהירות – 70 קשר (מדפים למעלה) 65 קשר (מדפים למטה)</label></div>
+<div class="item" style="background:#FFFF00;"><label>1. מהירות – 65 קשר</label></div>
 <div class="item"><label>2. תערובת – משוך להדממה</label></div>
 <div class="item"><label>3. ברז דלק – סגור (משוך עד הסוף החוצה)</label></div>
 <div class="item"><label>4. מצתים - OFF</label></div>
@@ -1191,12 +1191,13 @@
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">אובדן מנוע בטיסה- נסיונות התנעה</div>
 <div class="accordion-body">
-<div class="item" style="background:#FFFF00;"><label>1. מהירות – 65 קשר</label></div>
-<div class="item"><label>2. ברז דלק – ON (דחוף מלא פנימה)</label></div>
-<div class="item"><label>3. בורר דלק – שניהם</label></div>
-<div class="item"><label>4. תערובת – עשירה (אם המנוע לא התניע)</label></div>
-<div class="item"><label>5. מפסק הצתה – BOTH (או START אם המדחף עצר)</label></div>
-<div class="item"><label>6. אם המדחף סובב, המנוע יותנע מעצמו מספר שניות. אם המדחף עצר – סובב מתג הצתה ל- START, דחוף לאט את המצערת פנימה ממצב סרק וטיפול לקבלת פעולה חלקה</label></div>
+<div class="item" style="background:#FFFF00;"><label>1. מהירות – 60 קשר</label></div>
+<div class="item"><label>5. אוויר למאייד – חם</label></div>
+<div class="item"><label>2. תיחול – נעול</label></div>
+<div class="item"><label>3. ברז דלק – ON (דחוף מלא פנימה)</label></div>
+<div class="item"><label>4. בורר דלק – שניהם</label></div>
+<div class="item"><label>6. תערובת – עשירה</label></div>
+<div class="item"><label>7. מפסק הצתה – BOTH (או START אם המדחף עצר)</label></div>
 </div>`,
             'comm-failure': `<div class="item"><label>1. אם אובדן הקשר אירע בתחום הפיקוח של שדה ההמראה ה-CTR, יש לחזור לנחיתה לפי כללי השדה. אם הדבר אינו בר ביצוע ימשיך לפי תכנית הטיסה ולפי הנהלים הבאים:</label></div>
 <div class="item"><label>2. טרנספונדר 7600 - Mode C</label></div>
@@ -1236,7 +1237,7 @@
 <div class="item"><label>6. 5) נחת לאחר קבלת אור ירוק מהמגדל.</label></div>
 <div class="item"><label>7. הערה: המגדל יתמיד בשידור הוראות לכלי הטיס.</label></div>
 </div>`,
-            'stall': `<div class="item"><label style="color:red;">1. בד"ח לפני הזדקרות</label></div>
+            'stall': `<div class="item" style="background:#FFFF00;"><label>1. <span style="font-weight:bold">בד"ח לפני הזדקרות</span></label></div>
 <div class="item"><label>2. ברז דלק פתוח</label></div>
 <div class="item"><label>3. כמות דלק + מכשירי מנוע</label></div>
 <div class="item"><label>4. משאבת תיחול נעולה</label></div>
@@ -1250,7 +1251,7 @@
 <div class="item"><label>12. אין חפצים חופשיים מאחורה</label></div>
 <div class="item"><label>13. שדה לנחיתת אונס</label></div>
 <div class="item"><label>14. פניית ניקוי 180 או 2×90</label></div>
-<div class="item"><label>15. בחירת שדה לנ.א.</label></div>
+<div class="item" style="background:#FFFF00;"><label>15. <span style="font-weight:bold">בחירת שדה לנ.א.:</span></label></div>
 <div class="item"><label>16. רוח</label></div>
 <div class="item"><label>17. אורך</label></div>
 <div class="item"><label>18. מכשולים</label></div>
@@ -1264,9 +1265,9 @@
 <div class="item"><label>6. מצערת קדימה (במקרה אמת)</label></div>
 <div class="item"><label>7. תערובת עשירה</label></div>
 <div class="item"><label>8. מדפים למעלה</label></div>
-<div class="item"><label>9. כל נוסעי המטוס חגורים.</label></div>
-<div class="item"><label>10. <span style="font-weight:bold;color:#FF0000">בחר שדה – תכנן את נקודת הנגיע , נק' ה500 מעפש ונק' ה1000 מעפש</span></label></div>
-<div class="item"><label>11. <span style="font-weight:bold;color:#FF0000">נסיונות תיחול:</span></label></div>
+<div class="item"><label>9. חגורות – וודא חגירה לרבות חגורת כתף</label></div>
+<div class="item" style="background:#FFFF00;"><label>10. בחר שדה – תכנן את נקודת הנגיע , נק' ה500 מעפש ונק' ה1000 מעפש</label></div>
+<div class="item"><label>11. <span style="font-weight:bold;color:#FF0000">נסיונות לאיתור תקלה ותיחול</span></label></div>
 <div class="item"><label>12. תיחול – נעול</label></div>
 <div class="item"><label>13. מתג ראשי – ON</label></div>
 <div class="item"><label>14. מצתים – BOTH</label></div>
@@ -1276,13 +1277,15 @@
 <div class="item"><label>18. ברז דלק – פתוח</label></div>
 <div class="item"><label>19. <span style="font-weight:bold;color:#FF0000">דווח MAYDAY וטרנספונדר ל-7700</span></label></div>
 <div class="item"><label>20. <span style="font-weight:bold;color:#FF0000">סגירות בגובה 1000:</span></label></div>
-<div class="item"><label>21. תערובת – להדממה.</label></div>
-<div class="item"><label>22. ברז דלק – סגור.</label></div>
-<div class="item"><label>23. מצתים – מופסקים.</label></div>
-<div class="item"><label>24. דלתות – פתח.</label></div>
-<div class="item"><label>25. לאחר הורדת המדפים – מפסק ראשי סגור.</label></div>
-<div class="item"><label>26. נחת עם מדפים מלא מטה, במהירות נמוכה ועם זנב נמוך (אף גבוה) כדי להקטין את סכנת ההתהפכות.</label></div>
-<div class="item" style="background:#FFFF00;"><label>27. <span style="font-weight:bold;color:#FF0000">אין להפנות גב לשדה בשום מקרה! אין לנסות לפנות לאחור בגובה נמוך!</span></label></div>`,
+<div class="item"><label>21. ברז דלק – סגור.</label></div>
+<div class="item"><label>22. תערובת – להדממה.</label></div>
+<div class="item"><label>23. מצתים – OFF</label></div>
+<div class="item"><label>24. מדפים – למטה</label></div>
+<div class="item"><label>25. לאחר הורדת המדפים – מפסק ראשי OFF</label></div>
+<div class="item"><label>26. דלתות – פתח.</label></div>
+<div class="item"><label>27. הנח יד על המצח לשם הגנה על הראש</label></div>
+<div class="item"><label>28. נחת עם מדפים מלא מטה, במהירות נמוכה ועם זנב נמוך (אף גבוה) כדי להקטין את סכנת ההתהפכות.</label></div>
+<div class="item" style="background:#FFFF00;"><label>29. <span style="font-weight:bold;color:#FF0000">אין להפנות גב לשדה בשום מקרה! אין לנסות לפנות לאחור בגובה נמוך!</span></label></div>`,
             'power-failure': `<div class="accordion-header" onclick="toggleAccordion(this)">התקרחות קרבורטור</div>
 <div class="accordion-body">
 <div class="item"><label>1. ירידה הדרגתית בסל"ד והשתנקות מנוע עשויים להיגרם מהיווצרות קרח בקרבורטור</label></div>
@@ -1347,13 +1350,13 @@
 <div class="item"><label>12. <span style="font-weight:bold;color:#FF0000">הפחת הספק מנוע</span></label></div>
 <div class="item"><label>13. <span style="font-weight:bold;color:#FF0000">אם חום המנוע אינו יורד — נחת בשדה הקרוב</span></label></div>
 </div>`,
-            'squawk': `<div class="item"><label style="color:red;">1. נחיתת חרום בים (ציוף)</label></div>
+            'squawk': `<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">נחיתת חרום בים (ציוף)</span></label></div>
 <div class="item"><label>2. רדיו – שדר MAYDAY על תדר 121.5 מגה-הרץ תוך ציון מיקום וכוונות. העבר טרנספונדר לקוד חרום 7700</label></div>
 <div class="item"><label>3. חפצים כבדים בתא הנוסעים והמטען – השלך החוצה או אבטח למקומם</label></div>
 <div class="item"><label>4. מושבים וחגורות – הדק</label></div>
-<div class="item"><label>5. <span style="font-weight:bold;color:#FF0000">גישה לנחיתה: ברוח חזקה, ים סוער – לתוך הרוח. רוחות קלות, גלים גבוהים – במקביל לגלים</span></label></div>
-<div class="item"><label>6. <span style="font-weight:bold;color:#FF0000">מדפים – 30 מעלות</span></label></div>
-<div class="item"><label>7. <span style="font-weight:bold;color:#FF0000">כוח מנוע – הנמך בשיעור הנמכה של 300 רגל/דקה במהירות של 55 קשר. באם אין כוח מנוע הנמך במהירות 65 קשרי עם מדפים מטה</span></label></div>
+<div class="item"><label>5. גישה לנחיתה: ברוח חזקה, ים סוער – לתוך הרוח. רוחות קלות, גלים גבוהים – במקביל לגלים</label></div>
+<div class="item"><label>6. מדפים – 30 מעלות</label></div>
+<div class="item"><label>7. כוח מנוע – הנמך בשיעור הנמכה של 300 רגל/דקה במהירות של 55 קשר. באם אין כוח מנוע הנמך במהירות 65 קשרי עם מדפים מטה</label></div>
 <div class="item"><label>8. דלתות – שחרר נעילה</label></div>
 <div class="item"><label>9. נגיעה – התיישר בגובה הים במהירות הנמכה</label></div>
 <div class="item"><label>10. השתמש בחפץ רך (מעיל, תיק וכו') בתור כרית הגנה לפנים</label></div>
@@ -1361,13 +1364,13 @@
 <div class="item"><label>12. חגורות הצלה וסירת הצלה – נפח מחוץ למטוס</label></div>`,
             'fire': `<div class="accordion-header" onclick="toggleAccordion(this)">אש בזמן ההתנעה על הקרקע</div>
 <div class="accordion-body">
-<div class="item" style="background:#FFFF00;"><label>1. <span style="font-weight:bold">התנעה – המשך על מנת לשאוב את הלהבות ושאריות הדלק אל תוך המנוע</span></label></div>
-<div class="item"><label>2. אם המנוע תפס:</label></div>
+<div class="item" style="background:#FFFF00;"><label>1. <span style="font-weight:bold">התנעה – המשך על מנת לשאוב את הלהבות ושאריות הדלק אל תוך המנוע ובכדי לשרוף את שאריות הדלק במאייד ובמנוע</span></label></div>
+<div class="item"><label>2. אם המנוע הניע:</label></div>
 <div class="item"><label>3. סל"ד – 1700 למספר דקות</label></div>
 <div class="item"><label>4. מנוע – דומם ובדוק נזקים</label></div>
-<div class="item"><label>5. אם המנוע לא תפס:</label></div>
+<div class="item"><label>5. אם המנוע לא הניע:</label></div>
 <div class="item" style="background:#FFFF00;"><label>6. מצערת – פתח מלא</label></div>
-<div class="item" style="background:#FFFF00;"><label>7. תערובת – להדממה</label></div>
+<div class="item" style="background:#FFFF00;"><label>7. תערובת – משוך להדממה</label></div>
 <div class="item" style="background:#FFFF00;"><label>8. התנעה – המשך לנסות</label></div>
 <div class="item"><label>9. מטף כיבוי אש – הפעל</label></div>
 <div class="item"><label>10. ברז דלק – סגור (משוך עד הסוף החוצה)</label></div>
@@ -1391,16 +1394,14 @@
 <div class="item" style="background:#FFFF00;"><label>1. מפסק ראשי – OFF</label></div>
 <div class="item" style="background:#FFFF00;"><label>2. פתחי אוורור וחימום – סגור</label></div>
 <div class="item" style="background:#FFFF00;"><label>3. מטף כיבוי אש – הפעל</label></div>
-<div class="item"><label>4. מתג אוויוניקה – OFF</label></div>
+<div class="item"><label>4. <span style="font-weight:bold">אזהרה: לאחר הפעלת המטף בתא סגור יש לאוורר את התא. אוורר את התא כשהאש כבויה בוודאות</span></label></div>
 <div class="item"><label>5. כל המפסקים (למעט הצתה ) – OFF</label></div>
-<div class="item"><label>6. <span style="font-weight:bold">אזהרה: לאחר הפעלת המטף בתא סגור יש לאוורר את התא. אוורר את התא כשהאש כבויה בוודאות</span></label></div>
-<div class="item"><label>7. פתחי אוורור תא/חימום – פתח רק כאשר האש כבויה לחלוטין.</label></div>
-<div class="item"><label>8. אם האש החשמלית כבתה ויש צורך בחשמל להמשך הטיסה:</label></div>
-<div class="item"><label>9. מפסק ראשי – ON</label></div>
-<div class="item"><label>10. מנתקי מעגלים – אתר. מנתק שקפץ – אל תחזיר.</label></div>
-<div class="item"><label>11. מתגי רדיו – כבה</label></div>
-<div class="item"><label>12. מתג אוויוניקה – ON</label></div>
-<div class="item"><label>13. מפסקי חשמל/רדיו – הפעל בזה אחר זה, עם מרווחי זמן, עד שתזהה את המעגל המנותק</label></div>
+<div class="item"><label>6. אם האש החשמלית כבתה ויש צורך בחשמל להמשך הטיסה:</label></div>
+<div class="item"><label>7. מפסק ראשי – ON</label></div>
+<div class="item"><label>8. מנתקי מעגלים – בדוק. פיוז שקפץ – אל תחזיר.</label></div>
+<div class="item"><label>9. מתגי רדיו – OFF</label></div>
+<div class="item"><label>10. מפסקי חשמל/רדיו – הפעל בזה אחר זה, עם מרווחי זמן, עד שתזהה את המעגל המנותק</label></div>
+<div class="item"><label>11. פתחי אוורור תא/חימום – <span style="font-weight:bold">פתח רק כאשר האש כבויה לחלוטין</span>.</label></div>
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">אש בתא</div>
 <div class="accordion-body">
@@ -1412,14 +1413,13 @@
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">אש בכנף</div>
 <div class="accordion-body">
-<div class="item" style="background:#FFFF00;"><label>1. אורות – OFF</label></div>
-<div class="item" style="background:#FFFF00;"><label>2. חימום פיטו – OFF</label></div>
+<div class="item" style="background:#FFFF00;"><label>1. חימום פיטו – OFF</label></div>
 <div class="item" style="background:#FFFF00;"><label>3. אורות STROBE - OFF</label></div>
 <div class="item" style="background:#FFFF00;"><label>4. רגל לאש - סטיק נגדי!</label></div>
 <div class="item"><label>5. <span style="font-weight:bold">הערה: בצע החלקה כדי למנוע מהלהבות להתקרב למיכלי הדלק ולתא. נחת בהקדם האפשרי תוך שימוש במדפים רק במידת הנדרש ובפיינל ובנגיעה.</span></label></div>
 <div class="item"><label>6. דיווח - חוזר לנחיתה בהרצליה</label></div>
 </div>`,
-            'spin': `<div class="item" style="background:#FFFF00;"><label>1. כניסה בלתי מתוכננת למצב התקרחות</label></div>
+            'spin': `<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">כניסה בלתי מתוכננת למצב התקרחות</span></label></div>
 <div class="item" style="background:#FFFF00;"><label>2. חימום פיטו – ON</label></div>
 <div class="item" style="background:#FFFF00;"><label>3. פנה ו/או שנה גובה בכדי להתרחק מהאזור עם טמפרטורת ההתקרחות</label></div>
 <div class="item" style="background:#FFFF00;"><label>4. הפעל חימום תא במלוא העוצמה והפעל את מערכת ההפשרה בכדי להגביר את זרימת האוויר לשמשה למקסימום</label></div>
@@ -1432,35 +1432,31 @@
 <div class="item"><label>11. נחת בהחלקה במידה והחלקה קרח משמעותית מהצטברות קרח במידת האפשר</label></div>
 <div class="item"><label>12. שמור מהירות 65-75 קשר במהלך הגישה בתלולות הקרח שהצטברה</label></div>
 <div class="item"><label>13. בצע נחיתה שטוחה</label></div>`,
-            'static-block': `<div class="item" style="background:#FFFF00;"><label>1. חשד לקריאה מוטעית של המכשירים</label></div>
+            'static-block': `<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">חשד לקריאה מוטעית של המכשירים</span></label></div>
 <div class="item"><label>2. מתג מקור לחץ סטטי חלופי – הפעל</label></div>
 <div class="item"><label>3. הערה: במצב חרום במטוס שאינו מצויד במקור סטטי חלופי, ניתן לספק לחץ לתא על ידי שבירת הזכוכית במחוון שיעור ההנמכה/נסיקה</label></div>
 <div class="item"><label>4. מהירות – עיין בטבלאות המתאימות בפרק 5 בספר המטוס</label></div>`,
-            'puncture': `<div class="item" style="background:#FFFF00;"><label>1. נחיתה עם גלגל מפונצ'ר</label></div>
+            'puncture': `<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">נחיתה עם גלגל מפונצ'ר</span></label></div>
 <div class="item"><label>2. גישה – רגילה</label></div>
 <div class="item"><label>3. נגיעה – גע עם הגלגל הטוב תחילה. החזק את המטוס ללא נגיעת הגלגל המפונצ'ר בקרקע תוך שימוש ככל הניתן במאזנות</label></div>`,
             'electrical': `<div class="accordion-header" onclick="toggleAccordion(this)">טעינת יתר</div>
 <div class="accordion-body">
 <div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">מד הטעינה מראה טעינת יתר (סטייה במלוא הטווח)</span></label></div>
-<div class="item" style="background:#FFFF00;"><label>2. אלטרנטור – OFF</label></div>
-<div class="item" style="background:#FFFF00;"><label>3. ציוד חשמלי לא-חיוני – OFF</label></div>
-<div class="item" style="background:#FFFF00;"><label>4. הפסק טיסה בהקדם האפשרי</label></div>
+<div class="item"><label>2. אלטרנטור – OFF</label></div>
+<div class="item"><label>4. מכשור חשמלי לא-חיוני – OFF</label></div>
+<div class="item" style="background:#FFFF00;"><label>5. נחת בהקדם האפשרי</label></div>
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">נורית חוסר טעינה נדלקת – VOLTS נמוך בפנל / וכן מד הטעינה מראה פריקה</div>
 <div class="accordion-body">
-<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">מתח נמוך</span></label></div>
-<div class="item"><label>2. וכן מד הטעינה מראה פריקה</label></div>
-<div class="item"><label>3. חווי זה יתכן במצב של סל"ד נמוך ועומס חשמלי גבוה (כמו בהסעה). במקרה זה אין צורך באיפוס המפסק הראשי.</label></div>
-<div class="item"><label>4. מתג אוויוניקה- כבה</label></div>
-<div class="item"><label>5. מנתק מעגל אלטרנטור- בפנים</label></div>
-<div class="item"><label>6. מפסק ראשי – OFF (שני הצדדים)</label></div>
-<div class="item"><label>7. מפסק ראשי – ON</label></div>
-<div class="item"><label>8. בדוק מכווני מתח</label></div>
-<div class="item"><label>9. מתג אוויוניקה – הפעל.</label></div>
-<div class="item"><label>10. אם הנורית נדלקת שוב:</label></div>
-<div class="item"><label>11. אלטרנטור – OFF</label></div>
-<div class="item"><label>12. רדיו ומערכות חשמליות לא חיוניות – OFF</label></div>
-<div class="item" style="background:#FFFF00;"><label>13. <span style="font-weight:bold;color:#FF0000">טיסה – הפסק בהקדם אפשרי</span></label></div>
+<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">נורית חוסר טעינה נדלקת במהלך הטיסה (מד טעינה מראה פריקה)</span></label></div>
+<div class="item"><label>2. <span style="font-weight:bold">הערה: </span>נורית חוסר הטעינה עלולה להידלק במצבים של סל"ד נמוך עם עומס חשמלי גבוה, דוגמת הסעה בסל"ד נמוך. במקרה כזה אין צורך לאפס את המפסק הראשי מכיוון שלא התקיים מצב של טעינת יתר שיגרום להפסקת פעולת האלטרנטור</label></div>
+<div class="item"><label>3. מנתק מעגל אלטרנטור- זהה וודא בפנים</label></div>
+<div class="item"><label>4. מפסק ראשי – OFF (שני הצדדים)</label></div>
+<div class="item"><label>5. מפסק ראשי – ON</label></div>
+<div class="item"><label>7. אם הנורית נדלקת שוב:</label></div>
+<div class="item"><label>8. אלטרנטור – OFF</label></div>
+<div class="item"><label>9. רדיו ומערכות חשמליות לא חיוניות – OFF</label></div>
+<div class="item" style="background:#FFFF00;"><label>10. <span style="font-weight:bold;color:#FF0000">טיסה – הפסק בהקדם אפשרי</span></label></div>
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">כשל במערכת וואקום</div>
 <div class="accordion-body">
@@ -1577,7 +1573,7 @@
 <div class="item"><input type="checkbox" id="gps18"><label for="gps18">ברז דלק – פתוח</label></div>
 <div class="item"><input type="checkbox" id="gps19"><label for="gps19">הגאים – וודא חופשיות תנועה וכיוון נכון</label></div>
 <div class="item"><input type="checkbox" id="gps20"><label for="gps20">מפסק ראשי – ON</label></div>
-<div class="item"><input type="checkbox" id="gps21"><label for="gps21">רדיו ל-ON, <span style="font-weight:bold;color:#FF0000">בקש רשות התנעה</span> (קלירנס)</label></div>
+<div class="item"><input type="checkbox" id="gps21"><label for="gps21">רדיו ל-ON, <span style="font-weight:bold;color:#FF0000">בקש רשות התנעה</span> <span style="font-weight:bold">(קלירנס)</span></label></div>
 <div class="item"><input type="checkbox" id="gps22"><label for="gps22">רדיו ל-OFF</label></div>
 <div class="item"><input type="checkbox" id="gps23"><label for="gps23">מפסק ראשי – OFF</label></div>`,
             engine: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">התנעה</p>
@@ -1625,18 +1621,18 @@
 <div class="item"><input type="checkbox" id="gpt22"><label for="gpt22">דלתות – סגורות ונעולות</label></div>
 <div class="item"><input type="checkbox" id="gpt23"><label for="gpt23">הגאים חופשיים</label></div>
 <div class="item"><input type="checkbox" id="gpt24"><label for="gpt24"><span style="font-weight:bold;color:#FF0000">תדרי רדיו וניווט מכוילים</span></label></div>
-<div class="item"><input type="checkbox" id="gpt25"><label for="gpt25" style="cursor:pointer;" onclick="const briefingSubTab = document.querySelector('#sub-checks .sub-tab:nth-child(7)'); briefingSubTab.closest('.sub-tabs-container').style.display = 'flex'; runSub('briefing', briefingSubTab);">לחץ כאן לתדריך לפני המראה</label></div>
+<div class="item"><input type="checkbox" id="gpt25"><label for="gpt25" style="cursor:pointer;" onclick="const briefingSubTab = document.querySelector('#sub-checks .sub-tab:nth-child(7)'); briefingSubTab.closest('.sub-tabs-container').style.display = 'flex'; runSub('briefing', briefingSubTab);"><span style="font-weight:bold;color:#FF4000">לחץ כאן לתדריך לפני המראה</span></label></div>
 <div class="item"><input type="checkbox" id="gpt26"><label for="gpt26">צלע סופית נקייה</label></div>
 <div class="item"><input type="checkbox" id="gpt27"><label for="gpt27"><span style="font-weight:bold;color:#FF0000">בקש רשות להתיישר – מוכן לעזיבה</span></label></div>`,
             briefing: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">תדריך לפני המראה</p>
-<div class="item"><input type="checkbox" id="gbr1"><label for="gbr1">• מאיפה באה הרוח</label></div>
-<div class="item"><input type="checkbox" id="gbr2"><label for="gbr2">• כיוון המראה (מסלול 28/10)</label></div>
-<div class="item"><input type="checkbox" id="gbr3"><label for="gbr3">• לאיפה יוצאים</label></div>
-<div class="item"><input type="checkbox" id="gbr4"><label for="gbr4">• ניתוק במהירות 55 קשר</label></div>
+<div class="item"><input type="checkbox" id="gbr1"><label for="gbr1">מאיפה באה הרוח</label></div>
+<div class="item"><input type="checkbox" id="gbr2"><label for="gbr2">כיוון המראה (מסלול 28/10)</label></div>
+<div class="item"><input type="checkbox" id="gbr3"><label for="gbr3">לאיפה יוצאים</label></div>
+<div class="item"><input type="checkbox" id="gbr4"><label for="gbr4">ניתוק במהירות 55 קשר</label></div>
 <p style="font-size:0.9rem; font-weight:bold; margin: 16px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">חירומים</p>
-<div class="item"><input type="checkbox" id="gbr5"><label for="gbr5"><span style="color:#FF0000">• תקלה על המסלול (עשן, אש, אובדן שליטה כיווני, מד מהירות לא מגיב, פנצ'ר, הגאים) – ביטול המראה. כל תקלה עד הניתוק – עוצר את המטוס, מצערת לסרק, בלימה ופינוי המסלול</span></label></div>
-<div class="item"><input type="checkbox" id="gbr6"><label for="gbr6"><span style="color:#FF0000">• תקלה במהלך הניתוק – שיקול דעת (ביטול או שדה לנ"א). אם הלך מנוע לאחר המראה, לשמור מהירות 65 ופניייה ימינה לכיוון השדות (ב-10 השדה ישר ולפנים)</span></label></div>
-<div class="item"><input type="checkbox" id="gbr7"><label for="gbr7"><span style="color:#FF0000">• תקלה אחרי ניתוק – שדה לנ"א. כל תקלה אחרת כולל אש, טיפוס לגובה בטוח וחזרה לנחיתה</span></label></div>
+<div class="item"><input type="checkbox" id="gbr5"><label for="gbr5"><span style="font-weight:bold">• תקלה על המסלול (עשן, אש, אובדן שליטה כיווני, מד מהירות לא מגיב, פנצ'ר, הגאים) – ביטול המראה. כל תקלה עד הניתוק – עוצר את המטוס, מצערת לסרק, בלימה ופינוי המסלול</span></label></div>
+<div class="item"><input type="checkbox" id="gbr6"><label for="gbr6"><span style="font-weight:bold">• תקלה במהלך הניתוק – שיקול דעת (ביטול או שדה לנ"א). אם הלך מנוע לאחר המראה, לשמור מהירות 65 ופניייה ימינה לכיוון השדות (ב-10 השדה ישר ולפנים)</span></label></div>
+<div class="item"><input type="checkbox" id="gbr7"><label for="gbr7"><span style="font-weight:bold">• תקלה אחרי ניתוק – שדה לנ"א. כל תקלה אחרת כולל אש, טיפוס לגובה בטוח וחזרה לנחיתה</span></label></div>
 <div style="text-align:center; margin-top:20px;">
     <button onclick="const pretakeoffSubTab = document.querySelector('#sub-checks .sub-tab:nth-child(6)'); runSub('pretakeoff', pretakeoffSubTab); pretakeoffSubTab.closest('.sub-tabs-container').style.display = 'flex'; setTimeout(() => { const el = document.getElementById('gpt25'); if(el) el.scrollIntoView({behavior:'smooth', block:'center'}); }, 100);" style="background:#2c3e50; color:white; border:none; padding:12px 50px; border-radius:8px; font-size:1.1rem; font-weight:bold; cursor:pointer;">אישור</button>
 </div>`,
@@ -1671,16 +1667,17 @@
 <div class="item"><label>3. מאייד – אוויר חם כנדרש</label></div>`,
             prelanding: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">צלע עם הרוח</p>
 <div class="item"><label>1. משאבת תיחול – נעולה</label></div>
-<div class="item"><label>2. מתג ראשי – ON</label></div>
+<div class="item"><label>2. מאסטר – BOTH</label></div>
 <div class="item"><label>3. מצתים – BOTH</label></div>
-<div class="item"><label>4. אור נחיתה – הדלק</label></div>
+<div class="item"><label>4. כיוון, מצב אף, גובה, מרחק מהמסלול</label></div>
 <div class="item"><label>5. אוויר למאייד – קר</label></div>
 <div class="item"><label>6. תערובת – עשירה</label></div>
 <div class="item"><label>7. מדפים – למעלה</label></div>
-<div class="item"><label>8. ברז דלק פתוח – שניהם</label></div>
-<div class="item"><label>9. חגורות – נעולות</label></div>
-<div class="item"><label>10. דלתות – נעולות</label></div>
-<div class="item"><label>11. בלמים – בדוק תקינות ("פמפם" מספר פעמים)</label></div>
+<div class="item"><label>8. כיוון, מצב אף, גובה, מרחק מהמסלול</label></div>
+<div class="item"><label>9. ברז דלק פתוח – שניהם</label></div>
+<div class="item"><label>10. בלמים – בדוק תקינות ("פמפם" מספר פעמים)</label></div>
+<div class="item"><label>11. חגורות – נעולות</label></div>
+<div class="item"><label>12. דלתות – נעולות</label></div>
 <p style="font-size:0.9rem; font-weight:bold; margin: 16px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">צלע בסיס</p>
 <div class="item"><label>1. אוויר למאייד – חם</label></div>
 <div class="item"><label>2. מצערת – לסרק / 1500</label></div>
@@ -1689,21 +1686,21 @@
             landing: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">נחיתה רגילה</p>
 <div class="item"><label>1. מהירות – 65 קשר</label></div>
 <div class="item"><label>2. מדפים – כנדרש (בגובה 500 רגל מדפים מטה מלא)</label></div>
-<div class="item"><label>3. נגיעה – גלגלים ראשיים קודם</label></div>
+<div class="item"><label>3. נגיעה – כן נסע ראשי תחילה</label></div>
 <div class="item"><label>4. ריצת נחיתה – הורד גלגל אף בעדינות</label></div>
 <div class="item"><label>5. בלימה – המינימום הנדרש</label></div>
 <p style="font-size:0.9rem; font-weight:bold; margin: 16px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">נחיתה קצרה</p>
 <div class="item"><label>1. מדפים – 30 מעלות</label></div>
 <div class="item"><label>2. מהירות – 54 קשר (עד להצפה)</label></div>
 <div class="item"><label>3. מצערת – סרק לאחר מעבר מכשול</label></div>
-<div class="item"><label>4. נגיעה – גלגלים ראשיים קודם</label></div>
+<div class="item"><label>4. נגיעה – כן נסע ראשי תחילה</label></div>
 <div class="item"><label>5. בלמים – הפעל בכבדות</label></div>
 <p style="font-size:0.9rem; font-weight:bold; margin: 16px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">הליכה סביב</p>
-<div class="item"><label>1. מצערת – פתח מלא ואף מעל האופק</label></div>
+<div class="item"><label>1. מצערת – פתח מלא והחזק את האף מעט מעל האופק</label></div>
 <div class="item"><label>2. מאייד – קר</label></div>
 <div class="item"><label>3. מדפים – קפל ל- 20°</label></div>
 <div class="item"><label>4. מהירות טיפוס – 55-60 קשר</label></div>
-<div class="item"><label>5. מדפים – 10° (עד למעבר מכשול). קפל ל- 0° (לאחר הגעה לגובה בטוח ולמהירות 65 קשר)</label></div>`,
+<div class="item"><label>5. מדפים – בשלבים: 10° (עד למעבר מכשול) ואז בשלבים קפל ל- 0° (לאחר הגעה לגובה בטוח ולמהירות 65 קשר)</label></div>`,
             postlanding: `<p style="font-size:0.9rem; font-weight:bold; margin: 2px 10px 2px; text-decoration:underline; background:#f1c40f; display:inline-block; padding: 2px 6px;">אחרי נחיתה (פינוי מסלול)</p>
 <div class="item"><input type="checkbox" id="gpol1"><label for="gpol1">מאייד – קר</label></div>
 <div class="item"><input type="checkbox" id="gpol2"><label for="gpol2">מדפים – למעלה</label></div>
@@ -1748,13 +1745,13 @@
 <div class="item" style="background:#FFFF00;"><label>1. מצערת – העבר לסרק</label></div>
 <div class="item" style="background:#FFFF00;"><label>2. בלמים – הפעל</label></div>
 <div class="item"><label>3. מדפים – הרם</label></div>
-<div class="item"><label>4. תערובת דלק – לענייה</label></div>
+<div class="item"><label>4. תערובת דלק – משוך להדממה</label></div>
 <div class="item"><label>5. מצתים – OFF</label></div>
 <div class="item"><label>6. מפסק ראשי – OFF</label></div>
 </div>
-<div class="accordion-header" onclick="toggleAccordion(this)">אובדן מנוע מיד אחרי ניחוק</div>
+<div class="accordion-header" onclick="toggleAccordion(this)">אובדן מנוע מיד אחרי ניתוק</div>
 <div class="accordion-body">
-<div class="item" style="background:#FFFF00;"><label>1. מהירות – 70 קשר (מדפים למעלה) 65 קשר (מדפים למטה)</label></div>
+<div class="item" style="background:#FFFF00;"><label>1. מהירות – 65 קשר</label></div>
 <div class="item"><label>2. תערובת – משוך להדממה</label></div>
 <div class="item"><label>3. ברז דלק – סגור (משוך עד הסוף החוצה)</label></div>
 <div class="item"><label>4. מצתים - OFF</label></div>
@@ -1764,12 +1761,13 @@
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">אובדן מנוע בטיסה- נסיונות התנעה</div>
 <div class="accordion-body">
-<div class="item" style="background:#FFFF00;"><label>1. מהירות – 65 קשר</label></div>
-<div class="item"><label>2. ברז דלק – ON (דחוף מלא פנימה)</label></div>
-<div class="item"><label>3. בורר דלק – שניהם</label></div>
-<div class="item"><label>4. תערובת – עשירה (אם המנוע לא התניע)</label></div>
-<div class="item"><label>5. מפסק הצתה – BOTH (או START אם המדחף עצר)</label></div>
-<div class="item"><label>6. אם המדחף סובב, המנוע יותנע מעצמו מספר שניות. אם המדחף עצר – סובב מתג הצתה ל- START, דחוף לאט את המצערת פנימה ממצב סרק וטיפול לקבלת פעולה חלקה</label></div>
+<div class="item" style="background:#FFFF00;"><label>1. מהירות – 60 קשר</label></div>
+<div class="item"><label>5. אוויר למאייד – חם</label></div>
+<div class="item"><label>2. תיחול – נעול</label></div>
+<div class="item"><label>3. ברז דלק – ON (דחוף מלא פנימה)</label></div>
+<div class="item"><label>4. בורר דלק – שניהם</label></div>
+<div class="item"><label>6. תערובת – עשירה</label></div>
+<div class="item"><label>7. מפסק הצתה – BOTH (או START אם המדחף עצר)</label></div>
 </div>`,
             'comm-failure': `<div class="item"><label>1. אם אובדן הקשר אירע בתחום הפיקוח של שדה ההמראה ה-CTR, יש לחזור לנחיתה לפי כללי השדה. אם הדבר אינו בר ביצוע ימשיך לפי תכנית הטיסה ולפי הנהלים הבאים:</label></div>
 <div class="item"><label>2. טרנספונדר 7600 - Mode C</label></div>
@@ -1809,7 +1807,7 @@
 <div class="item"><label>6. 5) נחת לאחר קבלת אור ירוק מהמגדל.</label></div>
 <div class="item"><label>7. הערה: המגדל יתמיד בשידור הוראות לכלי הטיס.</label></div>
 </div>`,
-            'stall': `<div class="item"><label style="color:red;">1. בד"ח לפני הזדקרות</label></div>
+            'stall': `<div class="item" style="background:#FFFF00;"><label>1. <span style="font-weight:bold">בד"ח לפני הזדקרות</span></label></div>
 <div class="item"><label>2. ברז דלק פתוח</label></div>
 <div class="item"><label>3. כמות דלק + מכשירי מנוע</label></div>
 <div class="item"><label>4. משאבת תיחול נעולה</label></div>
@@ -1823,7 +1821,7 @@
 <div class="item"><label>12. אין חפצים חופשיים מאחורה</label></div>
 <div class="item"><label>13. שדה לנחיתת אונס</label></div>
 <div class="item"><label>14. פניית ניקוי 180 או 2×90</label></div>
-<div class="item"><label>15. בחירת שדה לנ.א.</label></div>
+<div class="item" style="background:#FFFF00;"><label>15. <span style="font-weight:bold">בחירת שדה לנ.א.:</span></label></div>
 <div class="item"><label>16. רוח</label></div>
 <div class="item"><label>17. אורך</label></div>
 <div class="item"><label>18. מכשולים</label></div>
@@ -1837,9 +1835,9 @@
 <div class="item"><label>6. מצערת קדימה (במקרה אמת)</label></div>
 <div class="item"><label>7. תערובת עשירה</label></div>
 <div class="item"><label>8. מדפים למעלה</label></div>
-<div class="item"><label>9. כל נוסעי המטוס חגורים.</label></div>
-<div class="item"><label>10. <span style="font-weight:bold;color:#FF0000">בחר שדה – תכנן את נקודת הנגיע , נק' ה500 מעפש ונק' ה1000 מעפש</span></label></div>
-<div class="item"><label>11. <span style="font-weight:bold;color:#FF0000">נסיונות תיחול:</span></label></div>
+<div class="item"><label>9. חגורות – וודא חגירה לרבות חגורת כתף</label></div>
+<div class="item" style="background:#FFFF00;"><label>10. בחר שדה – תכנן את נקודת הנגיע , נק' ה500 מעפש ונק' ה1000 מעפש</label></div>
+<div class="item"><label>11. <span style="font-weight:bold;color:#FF0000">נסיונות לאיתור תקלה ותיחול</span></label></div>
 <div class="item"><label>12. תיחול – נעול</label></div>
 <div class="item"><label>13. מתג ראשי – ON</label></div>
 <div class="item"><label>14. מצתים – BOTH</label></div>
@@ -1849,13 +1847,15 @@
 <div class="item"><label>18. ברז דלק – פתוח</label></div>
 <div class="item"><label>19. <span style="font-weight:bold;color:#FF0000">דווח MAYDAY וטרנספונדר ל-7700</span></label></div>
 <div class="item"><label>20. <span style="font-weight:bold;color:#FF0000">סגירות בגובה 1000:</span></label></div>
-<div class="item"><label>21. תערובת – להדממה.</label></div>
-<div class="item"><label>22. ברז דלק – סגור.</label></div>
-<div class="item"><label>23. מצתים – מופסקים.</label></div>
-<div class="item"><label>24. דלתות – פתח.</label></div>
-<div class="item"><label>25. לאחר הורדת המדפים – מפסק ראשי סגור.</label></div>
-<div class="item"><label>26. נחת עם מדפים מלא מטה, במהירות נמוכה ועם זנב נמוך (אף גבוה) כדי להקטין את סכנת ההתהפכות.</label></div>
-<div class="item" style="background:#FFFF00;"><label>27. <span style="font-weight:bold;color:#FF0000">אין להפנות גב לשדה בשום מקרה! אין לנסות לפנות לאחור בגובה נמוך!</span></label></div>`,
+<div class="item"><label>21. ברז דלק – סגור.</label></div>
+<div class="item"><label>22. תערובת – להדממה.</label></div>
+<div class="item"><label>23. מצתים – OFF</label></div>
+<div class="item"><label>24. מדפים – למטה</label></div>
+<div class="item"><label>25. לאחר הורדת המדפים – מפסק ראשי OFF</label></div>
+<div class="item"><label>26. דלתות – פתח.</label></div>
+<div class="item"><label>27. הנח יד על המצח לשם הגנה על הראש</label></div>
+<div class="item"><label>28. נחת עם מדפים מלא מטה, במהירות נמוכה ועם זנב נמוך (אף גבוה) כדי להקטין את סכנת ההתהפכות.</label></div>
+<div class="item" style="background:#FFFF00;"><label>29. <span style="font-weight:bold;color:#FF0000">אין להפנות גב לשדה בשום מקרה! אין לנסות לפנות לאחור בגובה נמוך!</span></label></div>`,
             'power-failure': `<div class="accordion-header" onclick="toggleAccordion(this)">התקרחות קרבורטור</div>
 <div class="accordion-body">
 <div class="item"><label>1. ירידה הדרגתית בסל"ד והשתנקות מנוע עשויים להיגרם מהיווצרות קרח בקרבורטור</label></div>
@@ -1920,13 +1920,13 @@
 <div class="item"><label>12. <span style="font-weight:bold;color:#FF0000">הפחת הספק מנוע</span></label></div>
 <div class="item"><label>13. <span style="font-weight:bold;color:#FF0000">אם חום המנוע אינו יורד — נחת בשדה הקרוב</span></label></div>
 </div>`,
-            'squawk': `<div class="item"><label style="color:red;">1. נחיתת חרום בים (ציוף)</label></div>
+            'squawk': `<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">נחיתת חרום בים (ציוף)</span></label></div>
 <div class="item"><label>2. רדיו – שדר MAYDAY על תדר 121.5 מגה-הרץ תוך ציון מיקום וכוונות. העבר טרנספונדר לקוד חרום 7700</label></div>
 <div class="item"><label>3. חפצים כבדים בתא הנוסעים והמטען – השלך החוצה או אבטח למקומם</label></div>
 <div class="item"><label>4. מושבים וחגורות – הדק</label></div>
-<div class="item"><label>5. <span style="font-weight:bold;color:#FF0000">גישה לנחיתה: ברוח חזקה, ים סוער – לתוך הרוח. רוחות קלות, גלים גבוהים – במקביל לגלים</span></label></div>
-<div class="item"><label>6. <span style="font-weight:bold;color:#FF0000">מדפים – 30 מעלות</span></label></div>
-<div class="item"><label>7. <span style="font-weight:bold;color:#FF0000">כוח מנוע – הנמך בשיעור הנמכה של 300 רגל/דקה במהירות של 55 קשר. באם אין כוח מנוע הנמך במהירות 65 קשרי עם מדפים מטה</span></label></div>
+<div class="item"><label>5. גישה לנחיתה: ברוח חזקה, ים סוער – לתוך הרוח. רוחות קלות, גלים גבוהים – במקביל לגלים</label></div>
+<div class="item"><label>6. מדפים – 30 מעלות</label></div>
+<div class="item"><label>7. כוח מנוע – הנמך בשיעור הנמכה של 300 רגל/דקה במהירות של 55 קשר. באם אין כוח מנוע הנמך במהירות 65 קשרי עם מדפים מטה</label></div>
 <div class="item"><label>8. דלתות – שחרר נעילה</label></div>
 <div class="item"><label>9. נגיעה – התיישר בגובה הים במהירות הנמכה</label></div>
 <div class="item"><label>10. השתמש בחפץ רך (מעיל, תיק וכו') בתור כרית הגנה לפנים</label></div>
@@ -1934,13 +1934,13 @@
 <div class="item"><label>12. חגורות הצלה וסירת הצלה – נפח מחוץ למטוס</label></div>`,
             'fire': `<div class="accordion-header" onclick="toggleAccordion(this)">אש בזמן ההתנעה על הקרקע</div>
 <div class="accordion-body">
-<div class="item" style="background:#FFFF00;"><label>1. <span style="font-weight:bold">התנעה – המשך על מנת לשאוב את הלהבות ושאריות הדלק אל תוך המנוע</span></label></div>
-<div class="item"><label>2. אם המנוע תפס:</label></div>
+<div class="item" style="background:#FFFF00;"><label>1. <span style="font-weight:bold">התנעה – המשך על מנת לשאוב את הלהבות ושאריות הדלק אל תוך המנוע ובכדי לשרוף את שאריות הדלק במאייד ובמנוע</span></label></div>
+<div class="item"><label>2. אם המנוע הניע:</label></div>
 <div class="item"><label>3. סל"ד – 1700 למספר דקות</label></div>
 <div class="item"><label>4. מנוע – דומם ובדוק נזקים</label></div>
-<div class="item"><label>5. אם המנוע לא תפס:</label></div>
+<div class="item"><label>5. אם המנוע לא הניע:</label></div>
 <div class="item" style="background:#FFFF00;"><label>6. מצערת – פתח מלא</label></div>
-<div class="item" style="background:#FFFF00;"><label>7. תערובת – להדממה</label></div>
+<div class="item" style="background:#FFFF00;"><label>7. תערובת – משוך להדממה</label></div>
 <div class="item" style="background:#FFFF00;"><label>8. התנעה – המשך לנסות</label></div>
 <div class="item"><label>9. מטף כיבוי אש – הפעל</label></div>
 <div class="item"><label>10. ברז דלק – סגור (משוך עד הסוף החוצה)</label></div>
@@ -1964,16 +1964,14 @@
 <div class="item" style="background:#FFFF00;"><label>1. מפסק ראשי – OFF</label></div>
 <div class="item" style="background:#FFFF00;"><label>2. פתחי אוורור וחימום – סגור</label></div>
 <div class="item" style="background:#FFFF00;"><label>3. מטף כיבוי אש – הפעל</label></div>
-<div class="item"><label>4. מתג אוויוניקה – OFF</label></div>
+<div class="item"><label>4. <span style="font-weight:bold">אזהרה: לאחר הפעלת המטף בתא סגור יש לאוורר את התא. אוורר את התא כשהאש כבויה בוודאות</span></label></div>
 <div class="item"><label>5. כל המפסקים (למעט הצתה ) – OFF</label></div>
-<div class="item"><label>6. <span style="font-weight:bold">אזהרה: לאחר הפעלת המטף בתא סגור יש לאוורר את התא. אוורר את התא כשהאש כבויה בוודאות</span></label></div>
-<div class="item"><label>7. פתחי אוורור תא/חימום – פתח רק כאשר האש כבויה לחלוטין.</label></div>
-<div class="item"><label>8. אם האש החשמלית כבתה ויש צורך בחשמל להמשך הטיסה:</label></div>
-<div class="item"><label>9. מפסק ראשי – ON</label></div>
-<div class="item"><label>10. מנתקי מעגלים – אתר. מנתק שקפץ – אל תחזיר.</label></div>
-<div class="item"><label>11. מתגי רדיו – כבה</label></div>
-<div class="item"><label>12. מתג אוויוניקה – ON</label></div>
-<div class="item"><label>13. מפסקי חשמל/רדיו – הפעל בזה אחר זה, עם מרווחי זמן, עד שתזהה את המעגל המנותק</label></div>
+<div class="item"><label>6. אם האש החשמלית כבתה ויש צורך בחשמל להמשך הטיסה:</label></div>
+<div class="item"><label>7. מפסק ראשי – ON</label></div>
+<div class="item"><label>8. מנתקי מעגלים – בדוק. פיוז שקפץ – אל תחזיר.</label></div>
+<div class="item"><label>9. מתגי רדיו – OFF</label></div>
+<div class="item"><label>10. מפסקי חשמל/רדיו – הפעל בזה אחר זה, עם מרווחי זמן, עד שתזהה את המעגל המנותק</label></div>
+<div class="item"><label>11. פתחי אוורור תא/חימום – <span style="font-weight:bold">פתח רק כאשר האש כבויה לחלוטין</span>.</label></div>
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">אש בתא</div>
 <div class="accordion-body">
@@ -1985,14 +1983,13 @@
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">אש בכנף</div>
 <div class="accordion-body">
-<div class="item" style="background:#FFFF00;"><label>1. אורות – OFF</label></div>
-<div class="item" style="background:#FFFF00;"><label>2. חימום פיטו – OFF</label></div>
+<div class="item" style="background:#FFFF00;"><label>1. חימום פיטו – OFF</label></div>
 <div class="item" style="background:#FFFF00;"><label>3. אורות STROBE - OFF</label></div>
 <div class="item" style="background:#FFFF00;"><label>4. רגל לאש - סטיק נגדי!</label></div>
 <div class="item"><label>5. <span style="font-weight:bold">הערה: בצע החלקה כדי למנוע מהלהבות להתקרב למיכלי הדלק ולתא. נחת בהקדם האפשרי תוך שימוש במדפים רק במידת הנדרש ובפיינל ובנגיעה.</span></label></div>
 <div class="item"><label>6. דיווח - חוזר לנחיתה בהרצליה</label></div>
 </div>`,
-            'spin': `<div class="item" style="background:#FFFF00;"><label>1. כניסה בלתי מתוכננת למצב התקרחות</label></div>
+            'spin': `<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">כניסה בלתי מתוכננת למצב התקרחות</span></label></div>
 <div class="item" style="background:#FFFF00;"><label>2. חימום פיטו – ON</label></div>
 <div class="item" style="background:#FFFF00;"><label>3. פנה ו/או שנה גובה בכדי להתרחק מהאזור עם טמפרטורת ההתקרחות</label></div>
 <div class="item" style="background:#FFFF00;"><label>4. הפעל חימום תא במלוא העוצמה והפעל את מערכת ההפשרה בכדי להגביר את זרימת האוויר לשמשה למקסימום</label></div>
@@ -2005,35 +2002,31 @@
 <div class="item"><label>11. נחת בהחלקה במידה והחלקה קרח משמעותית מהצטברות קרח במידת האפשר</label></div>
 <div class="item"><label>12. שמור מהירות 65-75 קשר במהלך הגישה בתלולות הקרח שהצטברה</label></div>
 <div class="item"><label>13. בצע נחיתה שטוחה</label></div>`,
-            'static-block': `<div class="item" style="background:#FFFF00;"><label>1. חשד לקריאה מוטעית של המכשירים</label></div>
+            'static-block': `<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">חשד לקריאה מוטעית של המכשירים</span></label></div>
 <div class="item"><label>2. מתג מקור לחץ סטטי חלופי – הפעל</label></div>
 <div class="item"><label>3. הערה: במצב חרום במטוס שאינו מצויד במקור סטטי חלופי, ניתן לספק לחץ לתא על ידי שבירת הזכוכית במחוון שיעור ההנמכה/נסיקה</label></div>
 <div class="item"><label>4. מהירות – עיין בטבלאות המתאימות בפרק 5 בספר המטוס</label></div>`,
-            'puncture': `<div class="item" style="background:#FFFF00;"><label>1. נחיתה עם גלגל מפונצ'ר</label></div>
+            'puncture': `<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">נחיתה עם גלגל מפונצ'ר</span></label></div>
 <div class="item"><label>2. גישה – רגילה</label></div>
 <div class="item"><label>3. נגיעה – גע עם הגלגל הטוב תחילה. החזק את המטוס ללא נגיעת הגלגל המפונצ'ר בקרקע תוך שימוש ככל הניתן במאזנות</label></div>`,
             'electrical': `<div class="accordion-header" onclick="toggleAccordion(this)">טעינת יתר</div>
 <div class="accordion-body">
 <div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">מד הטעינה מראה טעינת יתר (סטייה במלוא הטווח)</span></label></div>
-<div class="item" style="background:#FFFF00;"><label>2. אלטרנטור – OFF</label></div>
-<div class="item" style="background:#FFFF00;"><label>3. ציוד חשמלי לא-חיוני – OFF</label></div>
-<div class="item" style="background:#FFFF00;"><label>4. הפסק טיסה בהקדם האפשרי</label></div>
+<div class="item"><label>2. אלטרנטור – OFF</label></div>
+<div class="item"><label>4. מכשור חשמלי לא-חיוני – OFF</label></div>
+<div class="item" style="background:#FFFF00;"><label>5. נחת בהקדם האפשרי</label></div>
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">נורית חוסר טעינה נדלקת – VOLTS נמוך בפנל / וכן מד הטעינה מראה פריקה</div>
 <div class="accordion-body">
-<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">מתח נמוך</span></label></div>
-<div class="item"><label>2. וכן מד הטעינה מראה פריקה</label></div>
-<div class="item"><label>3. חווי זה יתכן במצב של סל"ד נמוך ועומס חשמלי גבוה (כמו בהסעה). במקרה זה אין צורך באיפוס המפסק הראשי.</label></div>
-<div class="item"><label>4. מתג אוויוניקה- כבה</label></div>
-<div class="item"><label>5. מנתק מעגל אלטרנטור- בפנים</label></div>
-<div class="item"><label>6. מפסק ראשי – OFF (שני הצדדים)</label></div>
-<div class="item"><label>7. מפסק ראשי – ON</label></div>
-<div class="item"><label>8. בדוק מכווני מתח</label></div>
-<div class="item"><label>9. מתג אוויוניקה – הפעל.</label></div>
-<div class="item"><label>10. אם הנורית נדלקת שוב:</label></div>
-<div class="item"><label>11. אלטרנטור – OFF</label></div>
-<div class="item"><label>12. רדיו ומערכות חשמליות לא חיוניות – OFF</label></div>
-<div class="item" style="background:#FFFF00;"><label>13. <span style="font-weight:bold;color:#FF0000">טיסה – הפסק בהקדם אפשרי</span></label></div>
+<div class="item"><label>1. <span style="font-weight:bold;color:#FF0000">נורית חוסר טעינה נדלקת במהלך הטיסה (מד טעינה מראה פריקה)</span></label></div>
+<div class="item"><label>2. <span style="font-weight:bold">הערה: </span>נורית חוסר הטעינה עלולה להידלק במצבים של סל"ד נמוך עם עומס חשמלי גבוה, דוגמת הסעה בסל"ד נמוך. במקרה כזה אין צורך לאפס את המפסק הראשי מכיוון שלא התקיים מצב של טעינת יתר שיגרום להפסקת פעולת האלטרנטור</label></div>
+<div class="item"><label>3. מנתק מעגל אלטרנטור- זהה וודא בפנים</label></div>
+<div class="item"><label>4. מפסק ראשי – OFF (שני הצדדים)</label></div>
+<div class="item"><label>5. מפסק ראשי – ON</label></div>
+<div class="item"><label>7. אם הנורית נדלקת שוב:</label></div>
+<div class="item"><label>8. אלטרנטור – OFF</label></div>
+<div class="item"><label>9. רדיו ומערכות חשמליות לא חיוניות – OFF</label></div>
+<div class="item" style="background:#FFFF00;"><label>10. <span style="font-weight:bold;color:#FF0000">טיסה – הפסק בהקדם אפשרי</span></label></div>
 </div>
 <div class="accordion-header" onclick="toggleAccordion(this)">כשל במערכת וואקום</div>
 <div class="accordion-body">
@@ -2159,37 +2152,44 @@
     <div id="speeds" class="content-section" dir="rtl" style="text-align:right;">
         <div style="display:flex; align-items:center; gap:6px; padding:8px 10px;">
             <label style="font-weight:bold; font-size:1.8rem; white-space:nowrap;">מסלול בשימוש</label>
-            <input type="text" id="runwayInput" inputmode="numeric" style="width:52px; font-size:1.8rem; text-align:center; padding:4px; border:1px solid #aaa; border-radius:4px;" 
+            <input type="text" id="runwayInput" inputmode="numeric" style="width:52px; font-size:1.8rem; text-align:center; padding:4px; border:1px solid #aaa; border-radius:4px; touch-action:none; cursor:ns-resize;" 
                 onfocus="this.value='';"
-                oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value.length>=2) { this.blur(); if(typeof calcWind === 'function') calcWind(); }">
+                oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value.length>=2) { this.blur(); if(typeof calcWind === 'function') calcWind(); }"
+                onwheel="handleSpinnerWheel(event,'runwayInput',1,36,false,2)"
+                onblur="if(this.value.length===1) this.value='0'+this.value;">
         </div>
         <div style="display:flex; align-items:center; gap:6px; padding:8px 10px;">
             <label style="font-weight:bold; font-size:1.8rem; white-space:nowrap; align-self:center; margin-bottom:1.2rem;">לחץ</label>
             <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
-                <input type="text" id="pressureInch" inputmode="numeric" value="29.92" style="width:90px; font-size:1.8rem; text-align:center; padding:4px; border:1px solid #aaa; border-radius:4px;"
+                <input type="text" id="pressureInch" inputmode="numeric" value="29.92" style="width:90px; font-size:1.8rem; text-align:center; padding:4px; border:1px solid #aaa; border-radius:4px; touch-action:none; cursor:ns-resize;"
                     onfocus="this.value='';document.getElementById('pressureMb').value='';"
-                    oninput="let v=this.value.replace(/[^0-9]/g,''); if(v.length>2) v=v.slice(0,2)+'.'+v.slice(2); this.value=v; const n=parseFloat(v); if(!isNaN(n)) document.getElementById('pressureMb').value=(n*33.8639).toFixed(0); else document.getElementById('pressureMb').value=''; if(v.replace('.','').length>=4) this.blur();">
+                    oninput="let v=this.value.replace(/[^0-9]/g,''); if(v.length>2) v=v.slice(0,2)+'.'+v.slice(2); this.value=v; const n=parseFloat(v); if(!isNaN(n)) document.getElementById('pressureMb').value=(n*33.8639).toFixed(0); else document.getElementById('pressureMb').value=''; if(v.replace('.','').length>=4) this.blur();"
+                    onwheel="handlePressureWheel(event,'pressureInch')">
                 <span style="font-size:0.9rem;">אינץ'</span>
             </div>
             <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
-                <input type="text" id="pressureMb" inputmode="numeric" value="1013" style="width:90px; font-size:1.8rem; text-align:center; padding:4px; border:1px solid #aaa; border-radius:4px;"
+                <input type="text" id="pressureMb" inputmode="numeric" value="1013" style="width:90px; font-size:1.8rem; text-align:center; padding:4px; border:1px solid #aaa; border-radius:4px; touch-action:none; cursor:ns-resize;"
                     onfocus="this.value='';document.getElementById('pressureInch').value='';"
-                    oninput="this.value=this.value.replace(/[^0-9]/g,''); const v=parseFloat(this.value); if(!isNaN(v)) document.getElementById('pressureInch').value=(v/33.8639).toFixed(2); else document.getElementById('pressureInch').value=''; if(this.value.length>=4) this.blur();">
+                    oninput="this.value=this.value.replace(/[^0-9]/g,''); const v=parseFloat(this.value); if(!isNaN(v)) document.getElementById('pressureInch').value=(v/33.8639).toFixed(2); else document.getElementById('pressureInch').value=''; if(this.value.length>=4) this.blur();"
+                    onwheel="handlePressureWheel(event,'pressureMb')">
                 <span style="font-size:0.9rem;">מיליבר</span>
             </div>
         </div>
         <div style="display:flex; align-items:center; gap:6px; padding:8px 10px;">
             <label style="font-weight:bold; font-size:1.8rem; white-space:nowrap; align-self:center; margin-bottom:1.2rem;">רוח</label>
             <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
-                <input type="text" id="pressureInch2" inputmode="numeric" style="width:90px; font-size:1.8rem; text-align:center; padding:4px; border:1px solid #aaa; border-radius:4px;"
+                <input type="text" id="pressureInch2" inputmode="numeric" style="width:90px; font-size:1.8rem; text-align:center; padding:4px; border:1px solid #aaa; border-radius:4px; touch-action:none; cursor:ns-resize;"
                     onfocus="this.value='';"
-                    oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value.length>=2) this.blur();">
+                    oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value.length>=2){ if(parseInt(this.value)>40) this.value='40'; this.blur(); }"
+                    onwheel="handleSpinnerWheel(event,'pressureInch2',0,40)">
                 <span style="font-size:0.9rem;">עוצמה (קשר)</span>
             </div>
             <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
-                <input type="text" id="pressureMb2" inputmode="numeric" style="width:90px; font-size:1.8rem; text-align:center; padding:4px; border:1px solid #aaa; border-radius:4px;"
+                <input type="text" id="pressureMb2" inputmode="numeric" style="width:90px; font-size:1.8rem; text-align:center; padding:4px; border:1px solid #aaa; border-radius:4px; touch-action:none; cursor:ns-resize;"
                     onfocus="this.value='';"
-                    oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value.length>=3) this.blur();">
+                    oninput="this.value=this.value.replace(/[^0-9]/g,''); if(this.value.length>=3) this.blur();"
+                    onwheel="handleSpinnerWheel(event,'pressureMb2',0,360,true,3,10)"
+                    onblur="if(this.value.length>0 && this.value.length<3) this.value=this.value.padStart(3,'0');">
                 <span style="font-size:0.9rem;">כיוון</span>
             </div>
         </div>
@@ -2256,6 +2256,40 @@
             }
             return null;
         }
+        function stopLiveHeading() {
+            // stops the GPS watch and resets the live-heading UI/state — used both
+            // by the toggle button itself and by runSub() below, so the watch (and
+            // whatever battery draw it causes) never keeps running silently after
+            // the pilot navigates away from this screen without pressing "כבה" first
+            if (!liveHeadingMode && geoWatchId === null) return;
+            const capGeo = getCapacitorGeo();
+            if (geoWatchId !== null) {
+                if (capGeo) { capGeo.clearWatch({ id: geoWatchId }); }
+                else { navigator.geolocation.clearWatch(geoWatchId); }
+            }
+            geoWatchId = null;
+            liveHeadingMode = false;
+            liveHeading = null;
+            resetHeadingSmoothing();
+            const btn = document.getElementById('liveHeadingToggle');
+            const readout = document.getElementById('liveHeadingReadout');
+            if (btn) {
+                btn.classList.remove('gps-live-active');
+                btn.textContent = 'מצב חי (GPS)';
+                btn.style.background = 'white';
+                btn.style.color = 'black';
+            }
+            setNeedleColor(false);
+            if (readout) readout.style.display = 'none';
+            calcWind();
+        }
+        function setNeedleColor(active) {
+            const needle = document.getElementById('compassNeedle');
+            if (!needle) return;
+            needle.querySelectorAll('polygon').forEach(function(p) {
+                p.setAttribute('fill', active ? 'red' : 'black');
+            });
+        }
         function toggleLiveHeading() {
             const btn = document.getElementById('liveHeadingToggle');
             const readout = document.getElementById('liveHeadingReadout');
@@ -2282,9 +2316,11 @@
                 liveHeadingMode = false;
                 liveHeading = null;
                 resetHeadingSmoothing();
+                btn.classList.remove('gps-live-active');
                 btn.textContent = 'מצב חי (GPS)';
                 btn.style.background = 'white';
                 btn.style.color = 'black';
+                setNeedleColor(false);
                 readout.style.display = 'block';
                 readout.textContent = 'לא ניתן לקבל מיקום — בדוק הרשאות GPS';
                 calcWind();
@@ -2299,8 +2335,10 @@
                 resetHeadingSmoothing();
                 liveHeadingMode = true;
                 btn.textContent = 'GPS: פעיל (כבה)';
-                btn.style.background = '#2c3e50';
-                btn.style.color = 'white';
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.classList.add('gps-live-active');
+                setNeedleColor(true);
                 if (capGeo) {
                     capGeo.watchPosition({ enableHighAccuracy: true }, function(pos, err) {
                         if (err) { onErr(err); return; }
@@ -2313,21 +2351,126 @@
                     );
                 }
             } else {
-                if (geoWatchId !== null) {
-                    if (capGeo) { capGeo.clearWatch({ id: geoWatchId }); }
-                    else { navigator.geolocation.clearWatch(geoWatchId); }
-                }
-                geoWatchId = null;
-                liveHeadingMode = false;
-                liveHeading = null;
-                resetHeadingSmoothing();
-                btn.textContent = 'מצב חי (GPS)';
-                btn.style.background = 'white';
-                btn.style.color = 'black';
-                readout.style.display = 'none';
-                calcWind();
+                stopLiveHeading();
             }
         }
+        function setPressureFromInch(v) {
+            v = Math.max(25.00, Math.min(32.00, v));
+            document.getElementById('pressureInch').value = v.toFixed(2);
+            document.getElementById('pressureMb').value = Math.round(v * 33.8639);
+        }
+        function setPressureFromMb(v) {
+            v = Math.max(846, Math.min(1084, Math.round(v)));
+            document.getElementById('pressureMb').value = v;
+            document.getElementById('pressureInch').value = (v / 33.8639).toFixed(2);
+        }
+        function handlePressureWheel(evt, id) {
+            evt.preventDefault();
+            const isInch = (id === 'pressureInch');
+            const el = document.getElementById(id);
+            let v = parseFloat(el.value);
+            if (isNaN(v)) v = isInch ? 29.92 : 1013;
+            v += (evt.deltaY < 0 ? 1 : -1) * (isInch ? 0.01 : 1);
+            if (isInch) setPressureFromInch(v); else setPressureFromMb(v);
+        }
+        function attachPressureDragSpinner(id) {
+            // same drag-to-scroll behavior as the wind fields, but keeps the
+            // inch/millibar pair in sync on every step, same as typing does
+            const el = document.getElementById(id);
+            if (!el) return;
+            const isInch = (id === 'pressureInch');
+            const step = isInch ? 0.01 : 1;
+            const pxPerStep = 6;
+            let dragging = false, moved = false, startY = 0, startVal = 0;
+            el.addEventListener('pointerdown', function(e) {
+                dragging = true;
+                moved = false;
+                startY = e.clientY;
+                const v = parseFloat(el.value);
+                startVal = isNaN(v) ? (isInch ? 29.92 : 1013) : v;
+                el.setPointerCapture(e.pointerId);
+            });
+            el.addEventListener('pointermove', function(e) {
+                if (!dragging) return;
+                const dy = startY - e.clientY;
+                if (!moved && Math.abs(dy) < 4) return;
+                if (!moved) { moved = true; el.blur(); }
+                e.preventDefault();
+                const steps = Math.round(dy / pxPerStep);
+                const v = startVal + steps * step;
+                if (isInch) setPressureFromInch(v); else setPressureFromMb(v);
+            });
+            function endDrag() { dragging = false; }
+            el.addEventListener('pointerup', endDrag);
+            el.addEventListener('pointercancel', endDrag);
+            el.addEventListener('pointerleave', endDrag);
+        }
+        attachPressureDragSpinner('pressureInch');
+        attachPressureDragSpinner('pressureMb');
+        function wrapOrClamp(v, min, max, wrap, step) {
+            step = step || 1;
+            if (!wrap) {
+                v = Math.max(min, Math.min(max, v));
+                return min + Math.round((v - min) / step) * step;
+            }
+            const span = Math.round((max - min) / step) + 1; // number of discrete stops, e.g. 0,10,...,360 = 37
+            let idx = Math.round((v - min) / step);
+            idx = ((idx % span) + span) % span;
+            return min + idx * step;
+        }
+        function formatSpinnerVal(v, padLen) {
+            return padLen ? String(v).padStart(padLen, '0') : v;
+        }
+        function adjustSpinner(id, delta, min, max, wrap, padLen, step) {
+            step = step || 1;
+            const el = document.getElementById(id);
+            if (!el) return;
+            let v = parseInt(el.value);
+            if (isNaN(v)) v = min;
+            v = wrapOrClamp(v + delta * step, min, max, wrap, step);
+            el.value = formatSpinnerVal(v, padLen);
+            if (typeof calcWind === 'function') calcWind();
+        }
+        function handleSpinnerWheel(evt, id, min, max, wrap, padLen, step) {
+            // lets the pilot scroll the mouse wheel over the field to adjust it,
+            // instead of only typing a value in
+            evt.preventDefault();
+            adjustSpinner(id, evt.deltaY < 0 ? 1 : -1, min, max, wrap, padLen, step);
+        }
+        function attachDragSpinner(id, min, max, pxPerStep, wrap, padLen, step) {
+            // drag-to-scroll, like a phone's timer wheel — vertical drag up/down
+            // adjusts the value; a plain tap (no real movement) still focuses the
+            // field normally so typing a value directly still works
+            step = step || 1;
+            const el = document.getElementById(id);
+            if (!el) return;
+            let dragging = false, moved = false, startY = 0, startVal = 0;
+            el.addEventListener('pointerdown', function(e) {
+                dragging = true;
+                moved = false;
+                startY = e.clientY;
+                const v = parseInt(el.value);
+                startVal = isNaN(v) ? min : v;
+                el.setPointerCapture(e.pointerId);
+            });
+            el.addEventListener('pointermove', function(e) {
+                if (!dragging) return;
+                const dy = startY - e.clientY;
+                if (!moved && Math.abs(dy) < 4) return;
+                if (!moved) { moved = true; el.blur(); }
+                e.preventDefault();
+                const steps = Math.round(dy / pxPerStep);
+                el.value = formatSpinnerVal(wrapOrClamp(startVal + steps * step, min, max, wrap, step), padLen);
+                if (typeof calcWind === 'function') calcWind();
+            });
+            function endDrag() { dragging = false; }
+            el.addEventListener('pointerup', endDrag);
+            el.addEventListener('pointercancel', endDrag);
+            el.addEventListener('pointerleave', endDrag);
+        }
+        attachDragSpinner('runwayInput', 1, 36, 8, false, 2);
+        attachDragSpinner('pressureInch2', 0, 40, 8, false);
+        attachDragSpinner('pressureMb2', 0, 360, 10, true, 3, 10);
         function calcWind() {
             const rwy = parseInt(document.getElementById('runwayInput').value);
             const speed = parseInt(document.getElementById('pressureInch2').value);
@@ -2805,6 +2948,12 @@
     }
 
     function runSub(contentId, btn) {
+        // navigating away from the "נתוני מגדל" (speeds) screen — make sure the
+        // live GPS watch stops here too, not only via its own toggle button,
+        // so it can never keep running in the background on another screen
+        if (contentId !== 'speeds' && typeof liveHeadingMode !== 'undefined' && liveHeadingMode) {
+            stopLiveHeading();
+        }
         // 1. עדכון ויזואלי של תת-הלשונית (המסגרת השחורה)
         const row = btn.parentElement;
         row.querySelectorAll('.sub-tab').forEach(s => s.classList.remove('active-sub'));
